@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ sz }} - 景点详情</title>
+  {% load static %}
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/Mstyle.css' %}">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    /* 顶部导航 */
+    .top-nav {
+      background: rgba(255,255,255,0.95);
+      border-radius: 16px;
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 24px;
+    }
+    .nav-brand { font-size: 1.5rem; font-weight: 700; color: #667eea; }
+    .nav-links { display: flex; gap: 24px; align-items: center; }
+    .nav-links a { color: #333; text-decoration: none; font-weight: 500; transition: color 0.3s; }
+    .nav-links a:hover { background: #667eea; color: white; }
+    .nav-user { display: flex; align-items: center; gap: 12px; }
+    .nav-user .avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white; display: flex; align-items: center; justify-content: center;
+      font-weight: 600;
+    }
+    .nav-user span { font-weight: 500; color: #333; }
+    .btn-logout {
+      background: #ff4757; color: white; border: none; padding: 8px 16px;
+      border-radius: 20px; cursor: pointer; font-weight: 500;
+      transition: all 0.3s;
+    }
+    .btn-logout:hover { background: #ff3344; transform: translateY(-2px); }
+
+    /* 主内容区 */
+    .main-content { display: grid; grid-template-columns: 1fr 380px; gap: 24px; }
+
+    /* 景点卡片 */
+    .scenic-card {
+      background: rgba(255,255,255,0.98);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    }
+    .scenic-hero {
+      position: relative;
+      height: 320px;
+      overflow: hidden;
+    }
+    .scenic-hero img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .scenic-hero .overlay {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.7));
+      padding: 40px 24px 24px;
+      color: white;
+    }
+    .scenic-hero .scenic-name {
+      font-size: 2rem; font-weight: 700; margin-bottom: 8px;
+    }
+    .scenic-hero .scenic-meta {
+      display: flex; gap: 20px; font-size: 0.9rem;
+    }
+    .scenic-hero .score-badge {
+      background: linear-gradient(135deg, #ffd700, #ffb347);
+      padding: 4px 12px; border-radius: 20px;
+      font-weight: 600; display: inline-flex; align-items: center; gap: 4px;
+    }
+    .favorite-btn {
+      position: absolute; top: 20px; right: 20px;
+      background: white; border: none; width: 48px; height: 48px;
+      border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      transition: all 0.3s;
+      font-size: 1.4rem;
+    }
+    .favorite-btn:hover { transform: scale(1.1); }
+    .favorite-btn.favorited { background: #ff4757; color: white; }
+
+    /* 景点信息 */
+    .scenic-info { padding: 24px; }
+    .info-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
+      margin-bottom: 24px;
+    }
+    .info-item {
+      background: #f8f9fa;
+      padding: 16px;
+      border-radius: 12px;
+    }
+    .info-item .label {
+      font-size: 0.85rem; color: #666; margin-bottom: 4px;
+    }
+    .info-item .value {
+      font-size: 1rem; font-weight: 500; color: #333;
+    }
+
+    /* 介绍区 */
+    .intro-section {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+    }
+    .intro-section h3 {
+      font-size: 1.1rem; color: #333; margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .intro-section p {
+      color: #555; line-height: 1.8;
+      font-size: 0.95rem;
+    }
+
+    /* 评论区 */
+    .comments-section { background: rgba(255,255,255,0.98); border-radius: 20px; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); }
+    .section-title {
+      font-size: 1.3rem; font-weight: 700; color: #333;
+      margin-bottom: 20px; display: flex; align-items: center; gap: 8px;
+    }
+    .section-title .count {
+      background: #667eea; color: white;
+      padding: 2px 10px; border-radius: 12px;
+      font-size: 0.85rem;
+    }
+
+    /* 评论输入 */
+    .comment-form { margin-bottom: 24px; }
+    .comment-input {
+      width: 100%; padding: 16px;
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      resize: vertical;
+      min-height: 100px;
+      font-family: inherit;
+      transition: border-color 0.3s;
+    }
+    .comment-input:focus {
+      outline: none; border-color: #667eea;
+    }
+    .comment-form .form-footer {
+      display: flex; justify-content: space-between; align-items: center; margin-top: 12px;
+    }
+    .login-tip {
+      color: #666; font-size: 0.9rem;
+    }
+    .login-tip a { color: #667eea; text-decoration: none; }
+    .btn-submit {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white; border: none;
+      padding: 10px 24px; border-radius: 20px;
+      cursor: pointer; font-weight: 600;
+      transition: all 0.3s;
+    }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102,126,234,0.4); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* 评论列表 */
+    .comment-list { display: flex; flex-direction: column; gap: 16px; }
+    .comment-item {
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 12px;
+    }
+    .comment-header {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+    }
+    .comment-user {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .comment-user .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white; display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 600;
+    }
+    .comment-user .name { font-weight: 600; color: #333; }
+    .comment-time { font-size: 0.85rem; color: #999; }
+    .comment-content { color: #555; line-height: 1.6; }
+
+    .empty-comments {
+      text-align: center; padding: 40px;
+      color: #999;
+    }
+    .empty-comments .icon { font-size: 3rem; margin-bottom: 12px; }
+
+    /* Toast提示 */
+    .toast {
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.8); color: white;
+      padding: 12px 24px; border-radius: 8px;
+      z-index: 1000; opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .toast.show { opacity: 1; }
+    .toast.success { background: #2ed573; }
+    .toast.error { background: #ff4757; }
+
+    @media (max-width: 900px) {
+      .main-content { grid-template-columns: 1fr; }
+      .info-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 顶部导航 -->
+    <nav class="top-nav">
+      <a href="/" class="nav-brand">Travel</a>
+    <div class="nav-links">
+      <a href="/">首页</a>
+      <a href="/scenic/">旅游推荐</a>
+      <a href="/hotel/">酒店推荐</a>
+      <a href="/trip/">行程规划</a>
+      <a href="/ticket/">交通票务</a>
+        {% if user_id %}
+          <div class="nav-user">
+            <div class="avatar">{{ username|slice:":1" }}</div>
+            <span>{{ username }}</span>
+            <a href="/profile/">个人中心</a>
+            <button class="btn-logout" onclick="logout()">退出</button>
+          </div>
+        {% else %}
+          <a href="/login/">登录</a>
+        {% endif %}
+      </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <div class="main-content">
+      <!-- 左侧景点信息 -->
+      <div class="scenic-card">
+        <div class="scenic-hero">
+          <img src="{{ sz_pic_url }}" alt="{{ sz }}" onerror="this.src='https://picsum.photos/800/400?random=1'">
+          <button class="favorite-btn {% if is_favorited %}favorited{% endif %}" onclick="toggleFavorite()" id="favoriteBtn">
+            {{ is_favorited|yesno:"♥,♡" }}
+          </button>
+          <div class="overlay">
+            <div class="scenic-name">{{ sz }}</div>
+            <div class="scenic-meta">
+              <span class="score-badge">⭐ {{ sz_score }}分</span>
+              {% if sz_province %}<span>📍 {{ sz_province }} · {{ sz_city }}</span>{% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="scenic-info">
+          <div class="info-grid">
+            {% if sz_province or sz_city %}
+            <div class="info-item">
+              <div class="label">🏷️ 省份/城市</div>
+              <div class="value">{% if sz_province %}{{ sz_province }}{% endif %}{% if sz_city %} · {{ sz_city }}{% endif %}</div>
+            </div>
+            {% endif %}
+            <div class="info-item">
+              <div class="label">📍 地址</div>
+              <div class="value">{{ sz_address }}</div>
+            </div>
+            <div class="info-item">
+              <div class="label">🕐 开放时间</div>
+              <div class="value">请电话咨询</div>
+            </div>
+          </div>
+          <div class="intro-section">
+            <h3>📖 景区介绍</h3>
+            <p>{{ sz_introduce }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧评论区 -->
+      <div class="comments-section">
+        <h2 class="section-title">
+          💬 用户评论 <span class="count">{{ comments|length }}</span>
+        </h2>
+
+        <!-- 评论表单 -->
+        {% if user_id %}
+        <div class="comment-form">
+          <textarea class="comment-input" id="commentInput" placeholder="写下你的评论..." maxlength="500"></textarea>
+          <div class="form-footer">
+            <span class="login-tip">分享你的旅行体验</span>
+            <button class="btn-submit" onclick="submitComment()">发表评论</button>
+          </div>
+        </div>
+        {% else %}
+        <div class="comment-form">
+          <div class="login-tip">登录后参与评论 <a href="/login/">去登录</a></div>
+        </div>
+        {% endif %}
+
+        <!-- 评论列表 -->
+        <div class="comment-list" id="commentList">
+          {% if comments %}
+            {% for comment in comments %}
+            <div class="comment-item">
+              <div class="comment-header">
+                <div class="comment-user">
+                  <div class="avatar">{{ comment.C_user.Uname|slice:":1" }}</div>
+                  <span class="name">{{ comment.C_user.Uname }}</span>
+                </div>
+                <span class="comment-time">{{ comment.C_time|date:"Y-m-d H:i" }}</span>
+              </div>
+              <div class="comment-content">{{ comment.C_content }}</div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="empty-comments">
+              <div class="icon">💬</div>
+              <p>暂无评论，快来抢沙发吧！</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast提示 -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const scenicName = "{{ sz|escapejs }}";
+    const picUrl = "{{ sz_pic_url|escapejs }}";
+    let isFavorited = {{ is_favorited|yesno:"true,false" }};
+
+    function showToast(msg, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = 'toast show ' + type;
+      setTimeout(() => toast.className = 'toast', 3000);
+    }
+
+    function submitComment() {
+      const content = document.getElementById('commentInput').value.trim();
+      if (!content) { showToast('请输入评论内容', 'error'); return; }
+
+      fetch('/add_comment/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ scenic_name: scenicName, content })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.message === '1') {
+          showToast('评论成功!');
+          location.reload();
+        } else { showToast(data.msg || '评论失败', 'error'); }
+      })
+      .catch(() => showToast('评论失败', 'error'));
+    }
+
+    function toggleFavorite() {
+      fetch('/toggle_favorite/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+        body: JSON.stringify({ scenic_name: scenicName, pic_url: picUrl })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.message === '1') {
+          isFavorited = data.action === 'added';
+          const btn = document.getElementById('favoriteBtn');
+          btn.className = 'favorite-btn ' + (isFavorited ? 'favorited' : '');
+          btn.textContent = isFavorited ? '♥' : '♡';
+          showToast(data.msg);
+        } else { showToast(data.msg || '请先登录', 'error'); }
+      })
+      .catch(() => showToast('操作失败', 'error'));
+    }
+
+    function logout() {
+      document.cookie = "csrftoken=;expires=Thu,01 Jan 1970 00:00:00GMT";
+      window.location.href = '/logout/';
+    }
+
+    function getCookie(name) {
+      let c = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]*)$');
+      return c ? c[2] : '';
+    }
+  </script>
+</body>
+</html>

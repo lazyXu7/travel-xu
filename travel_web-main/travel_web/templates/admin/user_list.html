@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>用户列表 - Travel后台</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #f5f7fa;
+      min-height: 100vh;
+    }
+    /* 导航栏 */
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 240px;
+      height: 100vh;
+      background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px 0;
+    }
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-align: center;
+      padding: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      margin-bottom: 20px;
+    }
+    .menu { list-style: none; }
+    .menu-item {
+      padding: 15px 25px;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .menu-item:hover, .menu-item.active {
+      background: rgba(255,255,255,0.2);
+    }
+    .menu-item.active {
+      background: rgba(255,255,255,0.3);
+      border-left: 4px solid white;
+    }
+    .menu-item a {
+      color: white;
+      text-decoration: none;
+    }
+    .menu-section {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.6);
+      padding: 15px 25px 8px;
+      text-transform: uppercase;
+    }
+    .logout-btn {
+      position: absolute;
+      bottom: 20px;
+      left: 25px;
+      right: 25px;
+      padding: 12px;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .logout-btn:hover { background: rgba(255,255,255,0.3); }
+
+    /* 主内容 */
+    .main-content {
+      margin-left: 240px;
+      padding: 30px;
+    }
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    .page-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #333;
+    }
+
+    /* 卡片 */
+    .card {
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+
+    /* 搜索栏 */
+    .search-bar {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .search-input {
+      flex: 1;
+      padding: 12px 20px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .search-btn {
+      padding: 12px 30px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .search-btn:hover {
+      opacity: 0.9;
+    }
+
+    /* 表格 */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .data-table th {
+      text-align: left;
+      padding: 15px;
+      background: #f8f9fa;
+      color: #333;
+      font-weight: 600;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    .data-table td {
+      padding: 15px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .data-table tr:hover {
+      background: #f8f9fa;
+    }
+    .user-avatar {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      background: #667eea;
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+    }
+    .badge-admin { background: #e3f2fd; color: #1565c0; }
+    .badge-user { background: #e8f5e9; color: #2e7d32; }
+    .badge-vip { background: #fff3e0; color: #e65100; }
+    .action-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      margin-right: 5px;
+    }
+    .btn-danger { background: #ffebee; color: #c62828; }
+    .btn-danger:hover { background: #ffcdd2; }
+
+    /* 分页 */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .page-btn {
+      padding: 8px 15px;
+      border: 1px solid #e0e0e0;
+      background: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .page-btn:hover { background: #f5f5f5; }
+    .page-btn.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+    .page-info {
+      padding: 8px 15px;
+      color: #888;
+    }
+    .loading {
+      text-align: center;
+      padding: 50px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <!-- 侧边栏 -->
+  <nav class="sidebar">
+    <div class="logo">🎛️ 后台管理</div>
+    <ul class="menu">
+      <li class="menu-section">主菜单</li>
+      <li class="menu-item">
+        <span>📊</span>
+        <a href="/admin/dashboard/">控制台</a>
+      </li>
+      <li class="menu-section">用户管理</li>
+      <li class="menu-item active">
+        <span>👥</span>
+        <a href="/admin/users/">用户列表</a>
+      </li>
+      <li class="menu-item">
+        <span>💬</span>
+        <a href="/admin/comments/">评论管理</a>
+      </li>
+      <li class="menu-section">业务管理</li>
+      <li class="menu-item">
+        <span>📋</span>
+        <a href="/admin/orders/">订单管理</a>
+      </li>
+      <li class="menu-item">
+        <span>🏨</span>
+        <a href="/admin/hotels/">酒店管理</a>
+      </li>
+      <li class="menu-item">
+        <span>🏞️</span>
+        <a href="/admin/scenics/">景点管理</a>
+      </li>
+    </ul>
+    <button class="logout-btn" onclick="logout()">← 退出登录</button>
+  </nav>
+
+  <!-- 主内容 -->
+  <div class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">用户列表</h1>
+    </div>
+
+    <div class="card">
+      <!-- 搜索栏 -->
+      <div class="search-bar">
+        <input type="text" class="search-input" id="keyword" placeholder="搜索用户名..." onkeyup="handleEnter(event)">
+        <button class="search-btn" onclick="loadUsers(1)">🔍 搜索</button>
+      </div>
+
+      <!-- 表格 -->
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>用户</th>
+            <th>邮箱</th>
+            <th>性别</th>
+            <th>地区</th>
+            <th>评论数</th>
+            <th>收藏数</th>
+            <th>订单数</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="userTable">
+          <tr><td colspan="8" class="loading">加载中...</td></tr>
+        </tbody>
+      </table>
+
+      <!-- 分页 -->
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </div>
+
+  <script>
+    let currentPage = 1;
+    let totalPages = 1;
+
+    async function loadUsers(page) {
+      currentPage = page;
+      const keyword = document.getElementById('keyword').value;
+
+      const tbody = document.getElementById('userTable');
+      tbody.innerHTML = '<tr><td colspan="8" class="loading">加载中...</td></tr>';
+
+      try {
+        const res = await fetch(`/admin/users/data/?page=${page}&page_size=10&keyword=${encodeURIComponent(keyword)}`);
+        const data = await res.json();
+
+        if (data.status === 'success') {
+          const { list, total, page: p, page_size } = data.data;
+
+          if (list.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="loading">暂无数据</td></tr>';
+            document.getElementById('pagination').innerHTML = '';
+            return;
+          }
+
+          tbody.innerHTML = list.map(u => `
+            <tr>
+              <td>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <div class="user-avatar">${u.Uname.charAt(0).toUpperCase()}</div>
+                  <div>
+                    <div style="font-weight: 600;">${u.Uname}</div>
+                    <div style="font-size: 0.8rem; color: #888;">ID: ${u.UID}</div>
+                  </div>
+                </div>
+              </td>
+              <td>${u.Uemail || '-'}</td>
+              <td>${u.gender === 'M' ? '男' : u.gender === 'F' ? '女' : '-'}</td>
+              <td>${u.location || '-'}</td>
+              <td>${u.comment_count}</td>
+              <td>${u.favorite_count}</td>
+              <td>${u.order_count}</td>
+              <td>
+                <button class="action-btn btn-danger" onclick="deleteUser(${u.UID})">删除</button>
+              </td>
+            </tr>
+          `).join('');
+
+          // 分页
+          totalPages = Math.ceil(total / page_size);
+          renderPagination(total, page, page_size);
+        }
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="8" class="loading">加载失败</td></tr>';
+      }
+    }
+
+    function renderPagination(total, page, pageSize) {
+      const totalPages = Math.ceil(total / pageSize);
+      let html = '';
+
+      html += `<button class="page-btn" onclick="loadUsers(${page - 1})" ${page <= 1 ? 'disabled' : ''}>上一页</button>`;
+
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= page - 2 && i <= page + 2)) {
+          html += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="loadUsers(${i})">${i}</button>`;
+        } else if (i === page - 3 || i === page + 3) {
+          html += '<span style="padding: 8px;">...</span>';
+        }
+      }
+
+      html += `<button class="page-btn" onclick="loadUsers(${page + 1})" ${page >= totalPages ? 'disabled' : ''}>下一页</button>`;
+      html += `<span class="page-info">共 ${total} 条</span>`;
+
+      document.getElementById('pagination').innerHTML = html;
+    }
+
+    function handleEnter(e) {
+      if (e.key === 'Enter') {
+        loadUsers(1);
+      }
+    }
+
+    async function deleteUser(userId) {
+      if (!confirm('确定要删除该用户吗？此操作不可恢复！')) return;
+
+      try {
+        const formData = new FormData();
+        formData.append('user_id', userId);
+
+        const res = await fetch('/admin/users/delete/', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+          alert('删除成功');
+          loadUsers(currentPage);
+        } else {
+          alert('删除失败: ' + data.message);
+        }
+      } catch (err) {
+        alert('操作失败');
+      }
+    }
+
+    function logout() {
+      if (confirm('确定要退出登录吗？')) {
+        window.location.href = '/admin/logout/';
+      }
+    }
+
+    loadUsers(1);
+  </script>
+</body>
+</html>

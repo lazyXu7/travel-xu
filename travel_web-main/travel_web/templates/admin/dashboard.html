@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>控制台 - Travel后台</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #f5f7fa;
+      min-height: 100vh;
+    }
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 240px;
+      height: 100vh;
+      background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px 0;
+    }
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-align: center;
+      padding: 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+      margin-bottom: 20px;
+    }
+    .menu { list-style: none; }
+    .menu-item {
+      padding: 15px 25px;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .menu-item:hover, .menu-item.active {
+      background: rgba(255,255,255,0.2);
+    }
+    .menu-item.active {
+      background: rgba(255,255,255,0.3);
+      border-left: 4px solid white;
+    }
+    .menu-item a {
+      color: white;
+      text-decoration: none;
+    }
+    .menu-section {
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.6);
+      padding: 15px 25px 8px;
+      text-transform: uppercase;
+    }
+    .logout-btn {
+      position: absolute;
+      bottom: 20px;
+      left: 25px;
+      right: 25px;
+      padding: 12px;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .logout-btn:hover { background: rgba(255,255,255,0.3); }
+
+    .main-content {
+      margin-left: 240px;
+      padding: 30px;
+    }
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    .page-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #333;
+    }
+    .welcome { color: #666; font-size: 0.9rem; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .stat-card {
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    }
+    .stat-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+    }
+    .stat-card:nth-child(1) .stat-icon { background: #e3f2fd; }
+    .stat-card:nth-child(2) .stat-icon { background: #f3e5f5; }
+    .stat-card:nth-child(3) .stat-icon { background: #e8f5e9; }
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    .stat-label {
+      font-size: 0.9rem;
+      color: #888;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    .card {
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+    }
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .user-list { list-style: none; }
+    .user-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .user-item:last-child { border-bottom: none; }
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #667eea;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      margin-right: 12px;
+    }
+    .user-info { flex: 1; }
+    .user-name { font-weight: 600; color: #333; }
+    .user-email { font-size: 0.85rem; color: #888; }
+
+    .loading {
+      text-align: center;
+      padding: 50px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <nav class="sidebar">
+    <div class="logo">后台管理</div>
+    <ul class="menu">
+      <li class="menu-section">主菜单</li>
+      <li class="menu-item active">
+        <span>📊</span>
+        <a href="/admin/dashboard/">控制台</a>
+      </li>
+      <li class="menu-section">用户管理</li>
+      <li class="menu-item">
+        <span>👥</span>
+        <a href="/admin/users/">用户列表</a>
+      </li>
+      <li class="menu-item">
+        <span>💬</span>
+        <a href="/admin/comments/">评论管理</a>
+      </li>
+      <li class="menu-section">业务管理</li>
+      <li class="menu-item">
+        <span>📋</span>
+        <a href="/admin/orders/">订单管理</a>
+      </li>
+      <li class="menu-item">
+        <span>🏨</span>
+        <a href="/admin/hotels/">酒店管理</a>
+      </li>
+      <li class="menu-item">
+        <span>🏞️</span>
+        <a href="/admin/scenics/">景点管理</a>
+      </li>
+    </ul>
+    <button class="logout-btn" onclick="logout()">← 退出登录</button>
+  </nav>
+
+  <div class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">控制台</h1>
+      <span class="welcome">欢迎使用后台管理系统</span>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-value" id="totalUsers">--</div>
+        <div class="stat-label">总用户数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📋</div>
+        <div class="stat-value" id="totalOrders">--</div>
+        <div class="stat-label">总订单量</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💬</div>
+        <div class="stat-value" id="totalComments">--</div>
+        <div class="stat-label">总评论数</div>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <div class="card">
+        <div class="card-title">最近注册用户</div>
+        <ul class="user-list" id="recentUsers">
+          <li class="loading">加载中...</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function loadStats() {
+      try {
+        const res = await fetch('/admin/stats/');
+        const data = await res.json();
+
+        if (data.status === 'success') {
+          const d = data.data;
+          document.getElementById('totalUsers').textContent = d.total_users;
+          document.getElementById('totalOrders').textContent = d.total_orders;
+          document.getElementById('totalComments').textContent = d.total_comments;
+
+          const userList = document.getElementById('recentUsers');
+          if (d.recent_users && d.recent_users.length > 0) {
+            userList.innerHTML = d.recent_users.map(u => `
+              <li class="user-item">
+                <div class="user-avatar">${u.Uname.charAt(0).toUpperCase()}</div>
+                <div class="user-info">
+                  <div class="user-name">${u.Uname}</div>
+                  <div class="user-email">${u.Uemail || '未设置邮箱'}</div>
+                </div>
+              </li>
+            `).join('');
+          } else {
+            userList.innerHTML = '<li class="loading">暂无数据</li>';
+          }
+        }
+      } catch (err) {
+        console.error('加载统计数据失败:', err);
+      }
+    }
+
+    function logout() {
+      if (confirm('确定要退出登录吗？')) {
+        window.location.href = '/admin/logout/';
+      }
+    }
+
+    loadStats();
+  </script>
+</body>
+</html>

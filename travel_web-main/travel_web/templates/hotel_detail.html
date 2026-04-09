@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>酒店详情 - Travel</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container { max-width: 1000px; margin: 0 auto; }
+
+    /* 顶部导航 */
+    .top-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(10px);
+      padding: 12px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+      z-index: 100;
+    }
+    .nav-brand {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #11998e;
+      text-decoration: none;
+    }
+    .nav-links { display: flex; gap: 20px; align-items: center; }
+    .nav-links a {
+      color: #333;
+      text-decoration: none;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 20px;
+      transition: all 0.3s;
+    }
+    .nav-links a:hover { background: #11998e; color: white; }
+    .nav-links a.active { background: #11998e; color: white; }
+    .nav-user { display: flex; align-items: center; gap: 12px; }
+    .nav-user .avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: linear-gradient(135deg, #11998e, #38ef7d);
+      color: white; display: flex; align-items: center; justify-content: center;
+      font-weight: 600;
+    }
+    .btn-logout {
+      background: #ff4757; color: white; border: none; padding: 8px 16px;
+      border-radius: 20px; cursor: pointer; font-weight: 500;
+      transition: all 0.3s;
+    }
+    .btn-logout:hover { background: #ff3344; }
+
+    .main-card {
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+      margin-top: 80px;
+    }
+
+    .hotel-hero {
+      position: relative;
+      height: 300px;
+    }
+    .hotel-hero img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .hotel-hero .overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.7));
+      padding: 60px 30px 25px;
+      color: white;
+    }
+    .hotel-name {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .hotel-meta-row {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      font-size: 0.95rem;
+    }
+
+    .hotel-body { padding: 30px; }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 30px;
+    }
+
+    .info-item {
+      background: #f8f9fa;
+      padding: 18px;
+      border-radius: 12px;
+    }
+    .info-item .label {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 6px;
+    }
+    .info-item .value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #333;
+    }
+    .info-item.highlight {
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+      border: 2px solid #11998e;
+    }
+    .info-item.highlight .value { color: #11998e; font-size: 1.3rem; }
+    .info-item.danger {
+      background: linear-gradient(135deg, #fff5f5, #fed7d7);
+      border: 2px solid #ff4757;
+    }
+    .info-item.danger .value { color: #ff4757; }
+
+    .section-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e9ecef;
+    }
+
+    .intro-text {
+      color: #555;
+      line-height: 1.8;
+      font-size: 0.95rem;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 30px;
+      flex-wrap: wrap;
+    }
+    .btn-back {
+      flex: 1;
+      min-width: 150px;
+      padding: 14px 24px;
+      background: #e9ecef;
+      color: #333;
+      border: none;
+      border-radius: 25px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+      text-decoration: none;
+    }
+    .btn-back:hover { background: #dee2e6; }
+
+    .btn-favorite {
+      flex: 1;
+      min-width: 150px;
+      padding: 14px 24px;
+      background: #ff4757;
+      color: white;
+      border: none;
+      border-radius: 25px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-favorite:hover { background: #ff3344; transform: translateY(-2px); }
+    .btn-favorite.favorited {
+      background: #e9ecef;
+      color: #ff4757;
+    }
+    .btn-favorite.favorited:hover { background: #dee2e6; }
+
+    .btn-book {
+      flex: 1;
+      min-width: 150px;
+      padding: 14px 24px;
+      background: linear-gradient(135deg, #11998e, #38ef7d);
+      color: white;
+      border: none;
+      border-radius: 25px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-book:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(17,153,142,0.4); }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .toast.show { opacity: 1; }
+    .toast.success { background: #11998e; }
+    .toast.error { background: #ff4757; }
+
+    /* 评论区 */
+    .comments-section {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      margin-top: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+    }
+    .comment-form {
+      margin-bottom: 24px;
+    }
+    .comment-input {
+      width: 100%;
+      padding: 14px;
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      resize: vertical;
+      min-height: 80px;
+      font-family: inherit;
+      transition: border-color 0.3s;
+    }
+    .comment-input:focus {
+      outline: none;
+      border-color: #11998e;
+    }
+    .comment-form .form-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+    }
+    .login-tip { color: #666; font-size: 0.9rem; }
+    .login-tip a { color: #11998e; text-decoration: none; font-weight: 600; }
+    .btn-submit {
+      background: linear-gradient(135deg, #11998e, #38ef7d);
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+    .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(17,153,142,0.4); }
+
+    .comment-list { display: flex; flex-direction: column; gap: 16px; }
+    .comment-item {
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 12px;
+    }
+    .comment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .comment-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .comment-user .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #11998e, #38ef7d);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .comment-user .name { font-weight: 600; color: #333; font-size: 0.9rem; }
+    .comment-time { font-size: 0.8rem; color: #999; }
+    .comment-content { color: #555; line-height: 1.6; font-size: 0.9rem; }
+
+    .empty-comments {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+    .empty-comments .icon { font-size: 3rem; margin-bottom: 12px; }
+
+    .error-card {
+      background: white;
+      border-radius: 20px;
+      padding: 80px 40px;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+      margin-top: 80px;
+    }
+    .error-card .icon { font-size: 5rem; margin-bottom: 20px; }
+    .error-card h2 { color: #333; margin-bottom: 12px; }
+    .error-card p { color: #666; margin-bottom: 24px; }
+    .error-card a {
+      display: inline-block;
+      background: #11998e;
+      color: white;
+      padding: 12px 28px;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .error-card a:hover { background: #0d7a6e; }
+  </style>
+</head>
+<body>
+  <!-- 顶部导航 -->
+  <nav class="top-nav">
+    <a href="/" class="nav-brand">Travel</a>
+    <div class="nav-links">
+      <a href="/">首页</a>
+      <a href="/scenic/">旅游推荐</a>
+      <a href="/hotel/" class="active">酒店推荐</a>
+      <a href="/trip/">行程规划</a>
+      <a href="/ticket/">交通票务</a>
+      {% if user_id %}
+        <div class="nav-user">
+          <div class="avatar">{{ username|slice:":1" }}</div>
+          <span>{{ username }}</span>
+          <a href="/profile/">个人中心</a>
+          <button class="btn-logout" onclick="logout()">退出</button>
+        </div>
+      {% else %}
+        <a href="/login/">登录</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- 错误状态 -->
+    <div class="error-card" id="errorCard" style="display:none;">
+      <div class="icon">🏨</div>
+      <h2>酒店信息不存在</h2>
+      <p>无法找到该酒店详情</p>
+      <a href="/hotel/">返回酒店搜索</a>
+    </div>
+
+    <!-- 酒店详情 -->
+    <div class="main-card" id="hotelCard" style="display:none;">
+      <div class="hotel-hero">
+        <img src="" alt="" id="hotelImg">
+        <div class="overlay">
+          <div class="hotel-name" id="hotelName"></div>
+          <div class="hotel-meta-row" id="hotelMeta"></div>
+        </div>
+      </div>
+      <div class="hotel-body">
+        <div class="info-grid" id="infoGrid"></div>
+        <div class="section-title">酒店介绍</div>
+        <p class="intro-text" id="introText"></p>
+        <div class="btn-group">
+          <a href="/hotel/" class="btn-back">返回搜索</a>
+          <button class="btn-favorite" id="favoriteBtn" onclick="toggleFavorite()">
+            <span id="favoriteText">♡ 收藏</span>
+          </button>
+          <button class="btn-book" id="bookBtn" onclick="goToBooking()">
+            <span>📅 立即预定</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 评论区 -->
+    <div class="comments-section" id="commentsSection" style="display:none;">
+      <div class="section-title">💬 用户评论</div>
+
+      {% if user_id %}
+      <div class="comment-form">
+        <textarea class="comment-input" id="commentInput" placeholder="写下你的入住体验..." maxlength="500"></textarea>
+        <div class="form-footer">
+          <span class="login-tip">分享你的住宿体验</span>
+          <button class="btn-submit" onclick="submitComment()">发表评论</button>
+        </div>
+      </div>
+      {% else %}
+      <div class="comment-form">
+        <div class="login-tip">登录后参与评论 <a href="/login/">去登录</a></div>
+      </div>
+      {% endif %}
+
+      <div class="comment-list" id="commentList"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // 从URL参数获取酒店数据
+    const urlParams = new URLSearchParams(window.location.search);
+    const hotelData = {
+      name: urlParams.get('name') || '',
+      province: urlParams.get('province') || '',
+      city: urlParams.get('city') || '',
+      address: urlParams.get('address') || '',
+      score: urlParams.get('score') || '4.5',
+      price: urlParams.get('price') || '288',
+      rooms: urlParams.get('rooms') || '10',
+      pic_url: urlParams.get('pic_url') || '',
+      intro: urlParams.get('intro') || '',
+      type: urlParams.get('type') || '舒适型',
+      star: urlParams.get('star') || '3',
+      id: urlParams.get('id') || '0'
+    };
+
+    let isFavorited = false;
+
+    function init() {
+      if (!hotelData.name) {
+        document.getElementById('errorCard').style.display = 'block';
+        return;
+      }
+
+      // 填充数据
+      document.getElementById('hotelImg').src = hotelData.pic_url || `https://picsum.photos/800/400?random=${hotelData.id}`;
+      document.getElementById('hotelImg').onerror = function() {
+        this.src = `https://picsum.photos/800/400?random=${Math.abs(hotelData.name.hashCode()) % 100}`;
+      };
+      document.getElementById('hotelName').textContent = hotelData.name;
+
+      // 构建元信息
+      let metaHtml = '';
+      if (hotelData.province || hotelData.city) {
+        metaHtml += `<span>📍 ${hotelData.province} ${hotelData.city}</span>`;
+      }
+      metaHtml += `<span>⭐ ${hotelData.score}分</span>`;
+      metaHtml += `<span>${hotelData.star}星${hotelData.type}</span>`;
+      document.getElementById('hotelMeta').innerHTML = metaHtml;
+
+      // 构建信息网格
+      document.getElementById('infoGrid').innerHTML = `
+        <div class="info-item highlight">
+          <div class="label">💰 价格</div>
+          <div class="value">¥${hotelData.price}<span style="font-size:0.8rem;font-weight:400;">/晚</span></div>
+        </div>
+        <div class="info-item danger">
+          <div class="label">🏠 剩余房源</div>
+          <div class="value">${hotelData.rooms}<span style="font-size:0.8rem;font-weight:400;"> 间</span></div>
+        </div>
+        <div class="info-item">
+          <div class="label">🏷️ 省份/城市</div>
+          <div class="value">${hotelData.province || '-'} ${hotelData.city || '-'}</div>
+        </div>
+        <div class="info-item">
+          <div class="label">🏢 酒店类型</div>
+          <div class="value">${hotelData.type} · ${hotelData.star}星</div>
+        </div>
+        <div class="info-item">
+          <div class="label">📍 地址</div>
+          <div class="value">${hotelData.address || '暂无'}</div>
+        </div>
+      `;
+
+      document.getElementById('introText').textContent = hotelData.intro || `${hotelData.name}位于${hotelData.city || ''}${hotelData.address || ''}，设施齐全，服务周到，是您出差旅游的理想选择。`;
+
+      document.getElementById('hotelCard').style.display = 'block';
+      document.getElementById('commentsSection').style.display = 'block';
+
+      // 加载评论
+      loadComments();
+    }
+
+    function loadComments() {
+      // 从localStorage获取评论
+      const comments = JSON.parse(localStorage.getItem('hotel_comments_' + hotelData.name) || '[]');
+      const listEl = document.getElementById('commentList');
+
+      if (comments.length === 0) {
+        listEl.innerHTML = `
+          <div class="empty-comments">
+            <div class="icon">💬</div>
+            <p>暂无评论，快来分享入住体验吧！</p>
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = comments.map(c => `
+        <div class="comment-item">
+          <div class="comment-header">
+            <div class="comment-user">
+              <div class="avatar">${c.user[0]}</div>
+              <span class="name">${c.user}</span>
+            </div>
+            <span class="comment-time">${c.time}</span>
+          </div>
+          <div class="comment-content">${c.content}</div>
+        </div>
+      `).join('');
+    }
+
+    function submitComment() {
+      const content = document.getElementById('commentInput').value.trim();
+      if (!content) {
+        showToast('请输入评论内容', 'error');
+        return;
+      }
+
+      const userId = '{{ user_id }}';
+      const username = '{{ username }}';
+
+      if (!userId) {
+        showToast('请先登录', 'error');
+        return;
+      }
+
+      // 保存到localStorage
+      const comments = JSON.parse(localStorage.getItem('hotel_comments_' + hotelData.name) || '[]');
+      comments.unshift({
+        user: username,
+        content: content,
+        time: new Date().toLocaleString('zh-CN')
+      });
+      localStorage.setItem('hotel_comments_' + hotelData.name, JSON.stringify(comments));
+
+      showToast('评论成功!');
+      document.getElementById('commentInput').value = '';
+      loadComments();
+    }
+
+    function toggleFavorite() {
+      const userId = '{{ user_id }}';
+      if (!userId) {
+        showToast('请先登录', 'error');
+        return;
+      }
+
+      isFavorited = !isFavorited;
+      const btn = document.getElementById('favoriteBtn');
+      const text = document.getElementById('favoriteText');
+
+      if (isFavorited) {
+        btn.classList.add('favorited');
+        text.textContent = '♥ 已收藏';
+        showToast('收藏成功!');
+        // 保存到localStorage
+        const favorites = JSON.parse(localStorage.getItem('hotel_favorites') || '[]');
+        if (!favorites.find(f => f.name === hotelData.name)) {
+          favorites.push(hotelData);
+          localStorage.setItem('hotel_favorites', JSON.stringify(favorites));
+        }
+      } else {
+        btn.classList.remove('favorited');
+        text.textContent = '♡ 收藏';
+        showToast('已取消收藏');
+        // 从localStorage移除
+        let favorites = JSON.parse(localStorage.getItem('hotel_favorites') || '[]');
+        favorites = favorites.filter(f => f.name !== hotelData.name);
+        localStorage.setItem('hotel_favorites', JSON.stringify(favorites));
+      }
+    }
+
+    function showToast(msg, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = 'toast show ' + type;
+      setTimeout(() => toast.className = 'toast', 3000);
+    }
+
+    function logout() {
+      window.location.href = '/logout/';
+    }
+
+    function goToBooking() {
+      const userId = '{{ user_id }}';
+      if (!userId) {
+        showToast('请先登录', 'error');
+        setTimeout(() => {
+          window.location.href = '/login/';
+        }, 1000);
+        return;
+      }
+
+      // 跳转到支付页面，携带酒店信息
+      const params = new URLSearchParams({
+        name: hotelData.name,
+        province: hotelData.province || '',
+        city: hotelData.city || '',
+        address: hotelData.address || '',
+        score: hotelData.score,
+        price: hotelData.price,
+        rooms: hotelData.rooms,
+        pic_url: hotelData.pic_url || '',
+        intro: hotelData.intro || '',
+        type: hotelData.type || '',
+        star: hotelData.star,
+        id: hotelData.id
+      });
+      window.location.href = '/hotel/pay/?' + params.toString();
+    }
+
+    // 添加hashCode方法
+    String.prototype.hashCode = function() {
+      let hash = 0;
+      for (let i = 0; i < this.length; i++) {
+        hash = ((hash << 5) - hash) + this.charCodeAt(i);
+        hash = hash & hash;
+      }
+      return hash;
+    };
+
+    init();
+  </script>
+</body>
+</html>

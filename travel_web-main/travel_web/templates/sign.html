@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>注册</title>
+  {% load static %}
+  <link href="https://fonts.googleapis.com/css?family=Nunito:400,600,700,800|Roboto:400,500,700" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <style>
+    .form-group { margin-bottom: 15px; }
+    .btn-sg {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 25px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-sg:hover { opacity: 0.9; transform: translateY(-2px); }
+    .text-right a { color: #667eea; text-decoration: none; }
+    .text-right a:hover { color: #764ba2; }
+    .error-tip { color: #ff4757; font-size: 12px; margin-top: 5px; display: none; }
+    .back-login { text-align: center; margin-top: 15px; }
+  </style>
+</head>
+
+<body class="background-imag">
+  <div class="card">
+    <div class="card-bg">
+      <div class="card-body">
+        <h4 class="heading">用户注册</h4>
+        <form class="form-primary" onsubmit="return false;">
+          <div class="form-group">
+            <input type="text" class="form-control" id="input_username" placeholder="用户名(2-20位)">
+            <div class="error-tip" id="usernameTip"></div>
+          </div>
+          <div class="form-group">
+            <input type="email" class="form-control" id="input_email" placeholder="QQ邮箱(用于找回密码)">
+            <div class="error-tip" id="emailTip"></div>
+          </div>
+          <div class="form-group">
+            <input type="password" class="form-control" id="input_password" placeholder="密码(6-16位)">
+            <div class="error-tip" id="passwordTip"></div>
+          </div>
+          <div class="form-group">
+            <input type="password" class="form-control" id="input_password2" placeholder="确认密码">
+            <div class="error-tip" id="password2Tip"></div>
+          </div>
+          <button type="button" class="btn-sg" id="formsubmit">注册</button>
+        </form>
+        <div class="back-login">
+          <a href="/login/">已有账号？返回登录</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script>
+$(function() {
+  $('#formsubmit').click(function() {
+    var username = $('#input_username').val().trim();
+    var email = $('#input_email').val().trim();
+    var pwd = $('#input_password').val();
+    var pwd2 = $('#input_password2').val();
+
+    // 清除错误提示
+    $('.error-tip').hide();
+
+    // 验证
+    if (username.length < 2 || username.length > 20) {
+      $('#usernameTip').text('用户名需要在2-20位之间').show();
+      return;
+    }
+
+    if (!email || !email.includes('@')) {
+      $('#emailTip').text('请输入有效的邮箱地址').show();
+      return;
+    }
+
+    if (pwd.length < 6 || pwd.length > 16) {
+      $('#passwordTip').text('密码需要在6-16位之间').show();
+      return;
+    }
+
+    if (pwd !== pwd2) {
+      $('#password2Tip').text('两次密码不一致').show();
+      return;
+    }
+
+    $.ajax({
+      url: '/signup/',
+      type: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({
+        username: username,
+        email: email,
+        password: pwd
+      }),
+      success: function(data) {
+        if (data.message == '1') {
+          alert('注册成功！');
+          window.location.href = "/login/";
+        } else if (data.message == '4') {
+          $('#usernameTip').text('用户名已存在').show();
+        } else {
+          alert('注册失败，请稍后重试');
+        }
+      },
+      error: function() {
+        alert('请求失败');
+      }
+    });
+  });
+});
+</script>
+</html>

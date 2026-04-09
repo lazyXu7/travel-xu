@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能助手 - AI旅游助手</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            min-height: 100vh;
+            background: #0a0a1a;
+        }
+
+        /* 全屏渐变背景 */
+        .page-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            z-index: -1;
+        }
+        .page-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 50%, rgba(118, 75, 162, 0.15) 0%, transparent 50%);
+        }
+
+        /* 顶部导航 */
+        .top-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(20px);
+            padding: 14px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        .nav-brand {
+            font-size: 1.6rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+            letter-spacing: 3px;
+        }
+        .nav-links { display: flex; gap: 8px; align-items: center; }
+        .nav-links a {
+            color: #444;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+        .nav-links a:hover { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .nav-links a.active { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .nav-user { display: flex; align-items: center; gap: 15px; }
+        .nav-user .avatar {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 600; font-size: 1.1rem;
+        }
+        .btn-logout {
+            background: #ff6b6b; color: white; border: none; padding: 10px 20px;
+            border-radius: 25px; cursor: pointer; font-weight: 500; transition: all 0.3s;
+        }
+        .btn-logout:hover { background: #ee5a5a; }
+
+        /* 主内容 */
+        .main-content {
+            min-height: 100vh;
+            padding-top: 90px;
+            padding-left: 50px;
+            padding-right: 50px;
+            padding-bottom: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        /* 页面标题 */
+        .page-header {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeInUp 0.8s ease-out;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .page-header h1 {
+            color: white;
+            font-size: 2.2rem;
+            font-weight: 300;
+            letter-spacing: 8px;
+            margin-bottom: 8px;
+            text-shadow: 0 4px 30px rgba(0,0,0,0.3);
+        }
+        .page-header h1 span {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .page-header p {
+            color: rgba(255,255,255,0.8);
+            font-size: 1rem;
+            letter-spacing: 2px;
+        }
+
+        /* 功能标签切换 */
+        .feature-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.8s ease-out 0.1s both;
+        }
+        .feature-tab {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 14px 35px;
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.7);
+            cursor: pointer;
+            transition: all 0.3s;
+            border-radius: 0;
+        }
+        .feature-tab:first-child { border-radius: 20px 0 0 20px; }
+        .feature-tab:last-child { border-radius: 0 20px 20px 0; }
+        .feature-tab.active {
+            background: rgba(255,255,255,0.95);
+            color: #667eea;
+            border-color: rgba(255,255,255,0.95);
+        }
+        .feature-tab:not(.active):hover {
+            background: rgba(255,255,255,0.15);
+            color: white;
+        }
+        .feature-tab .icon { font-size: 1.5rem; }
+        .feature-tab .title { font-size: 0.9rem; font-weight: 600; }
+
+        /* 聊天容器 */
+        .chat-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 20px;
+            height: calc(100vh - 300px);
+            min-height: 400px;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        /* 聊天主区域 */
+        .chat-main {
+            background: rgba(255,255,255,0.98);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 聊天头部 */
+        .chat-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+        .chat-header .avatar {
+            width: 42px;
+            height: 42px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        .chat-header-info h3 {
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        .chat-header-info .status {
+            color: rgba(255,255,255,0.8);
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .chat-header-info .status::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+        }
+
+                /* 聊天消息区域 */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .chat-messages::-webkit-scrollbar { width: 6px; }
+        .chat-messages::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
+
+        /* 景点简介tab的消息区 */
+        #intro-content .chat-messages {
+            background: white;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        /* 欢迎消息 */
+        .welcome-box {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        .welcome-box .icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        .welcome-box h4 {
+            color: #333;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        .welcome-box p {
+            color: #888;
+            max-width: 400px;
+            margin: 0 auto;
+            line-height: 1.8;
+        }
+
+        /* 消息样式 */
+        .message {
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease;
+            display: flex;
+            gap: 12px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .message.user { flex-direction: row-reverse; }
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        .message.ai .message-avatar {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        .message-content {
+            max-width: 75%;
+            padding: 14px 18px;
+            border-radius: 18px;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .message.ai .message-content {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-bottom-left-radius: 4px;
+            color: #333;
+        }
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        /* 加载动画 */
+        .typing-indicator {
+            display: flex;
+            gap: 5px;
+            padding: 15px 0;
+        }
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: 0s; }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-8px); }
+        }
+
+        /* 输入区域 */
+        .chat-input-area {
+            padding: 15px;
+            background: white;
+            border-top: 1px solid #eee;
+            flex-shrink: 0;
+        }
+        .chat-input-group {
+            display: flex;
+            gap: 12px;
+        }
+        .chat-input {
+            flex: 1;
+            border: 2px solid #e5e7eb;
+            border-radius: 25px;
+            padding: 14px 22px;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+        .chat-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102,126,234,0.1);
+        }
+        .btn-send {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 25px;
+            padding: 14px 28px;
+            color: white;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-send:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102,126,234,0.4);
+        }
+        .btn-send:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 快捷问题 */
+        .quick-questions {
+            padding: 10px 15px;
+            background: #f8fafc;
+            border-top: 1px solid #eee;
+            flex-shrink: 0;
+        }
+        .quick-questions small {
+            color: #888;
+            font-size: 0.8rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .quick-btn {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            color: #666;
+            margin: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .quick-btn:hover {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: transparent;
+            transform: translateY(-2px);
+        }
+
+        /* 侧边栏 */
+        .chat-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* 设置面板 */
+        .settings-panel {
+            background: rgba(255,255,255,0.98);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+        }
+        .settings-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .settings-title .icon {
+            font-size: 1.2rem;
+        }
+        .settings-group {
+            margin-bottom: 14px;
+        }
+        .settings-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #555;
+            margin-bottom: 6px;
+        }
+        .settings-group input,
+        .settings-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            background: white;
+        }
+        .settings-group input:focus,
+        .settings-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102,126,234,0.1);
+        }
+        .btn-reset {
+            width: 100%;
+            padding: 10px;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 10px;
+            color: #666;
+            font-weight: 500;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .btn-reset:hover {
+            background: #fee2e2;
+            color: #ef4444;
+        }
+
+        /* 景点生成器 */
+        .intro-generator {
+            background: rgba(255,255,255,0.98);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+        }
+        .intro-result {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 12px;
+            min-height: 80px;
+            line-height: 1.7;
+            color: #444;
+            font-size: 0.9rem;
+        }
+        .intro-result.empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            text-align: center;
+        }
+        .btn-generate {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 12px;
+        }
+        .btn-generate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102,126,234,0.4);
+        }
+
+        /* Tab内容 */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Toast提示 */
+        .toast {
+            position: fixed;
+            top: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 14px 30px;
+            border-radius: 30px;
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        .toast.show { opacity: 1; }
+        .toast.error { background: #ef4444; }
+
+        /* 响应式 */
+        @media (max-width: 1024px) {
+            .chat-wrapper {
+                grid-template-columns: 1fr;
+                height: auto;
+                min-height: calc(100vh - 320px);
+            }
+            .chat-sidebar { display: none; }
+        }
+        @media (max-width: 768px) {
+            .top-nav { padding: 12px 20px; }
+            .nav-brand { font-size: 1.3rem; }
+            .nav-links a { padding: 8px 12px; font-size: 0.85rem; }
+            .main-content { padding: 90px 20px 40px; }
+            .page-header h1 { font-size: 1.8rem; letter-spacing: 4px; }
+            .feature-tabs { flex-direction: column; align-items: center; gap: 8px; }
+            .feature-tab { width: 100%; max-width: 300px; border-radius: 16px !important; padding: 12px 20px; }
+            .feature-tab .icon { font-size: 1.3rem; }
+            .feature-tab .title { font-size: 0.85rem; }
+            .chat-wrapper { height: auto; min-height: 450px; gap: 15px; }
+            .page-header { margin-bottom: 20px; }
+            .page-header h1 { font-size: 1.6rem; letter-spacing: 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-bg"></div>
+
+    <!-- 顶部导航 -->
+    <nav class="top-nav">
+        <a href="/" class="nav-brand">Travel</a>
+        <div class="nav-links">
+            <a href="/">首页</a>
+            <a href="/scenic/">旅游推荐</a>
+            <a href="/hotel/">酒店推荐</a>
+            <a href="/trip/">行程规划</a>
+            <a href="/ticket/">交通票务</a>
+            <a href="/ai/" class="active">智能助手</a>
+            {% if user_id %}
+                <div class="nav-user">
+                    <div class="avatar">{{ username|slice:":1" }}</div>
+                    <span>{{ username }}</span>
+                    <a href="/profile/">个人中心</a>
+                    <button class="btn-logout" onclick="logout()">退出</button>
+                </div>
+            {% else %}
+                <a href="/login/">登录</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <div class="main-content">
+        <!-- 页面标题 -->
+        <div class="page-header">
+            <h1><span>AI</span> 智能助手</h1>
+            <p>您的专属旅游规划师</p>
+        </div>
+
+        <!-- 功能切换 -->
+        <div class="feature-tabs">
+            <div class="feature-tab active" onclick="switchTab('qa')">
+                <span class="icon">💬</span>
+                <span class="title">智能问答</span>
+            </div>
+            <div class="feature-tab" onclick="switchTab('itinerary')">
+                <span class="icon">🗺️</span>
+                <span class="title">行程规划</span>
+            </div>
+            <div class="feature-tab" onclick="switchTab('intro')">
+                <span class="icon">✍️</span>
+                <span class="title">景点简介</span>
+            </div>
+        </div>
+
+        <!-- 聊天主体 -->
+        <div class="chat-wrapper">
+            <!-- 左侧聊天区 -->
+            <div class="chat-main">
+                <div class="chat-header">
+                    <div class="avatar">🤖</div>
+                    <div class="chat-header-info">
+                        <h3 id="chat-title">智能问答助手</h3>
+                        <div class="status" id="chat-status">基于AI的旅游问答</div>
+                    </div>
+                </div>
+
+                <!-- 智能问答 -->
+                <div class="tab-content active" id="qa-content">
+                    <div class="chat-messages" id="qa-messages">
+                        <div class="welcome-box" id="qa-welcome">
+                            <div class="icon">🌍</div>
+                            <h4>欢迎使用智能旅游问答助手</h4>
+                            <p>我可以回答您关于景点、美食、住宿、交通等旅游相关问题，为您的旅行提供专业建议</p>
+                        </div>
+                    </div>
+                    <div class="quick-questions" id="qa-quick">
+                        <small>试试这样问我：</small>
+                        <button class="quick-btn" onclick="sendQuickQuestion('北京有哪些必去的景点？')">北京必去景点</button>
+                        <button class="quick-btn" onclick="sendQuickQuestion('去杭州玩3天怎么安排？')">杭州3日游</button>
+                        <button class="quick-btn" onclick="sendQuickQuestion('周末适合亲子游的地方推荐')">亲子游推荐</button>
+                        <button class="quick-btn" onclick="sendQuickQuestion('推荐一些美食攻略')">美食攻略</button>
+                    </div>
+                </div>
+
+                <!-- 行程规划 -->
+                <div class="tab-content" id="itinerary-content">
+                    <div class="chat-messages" id="itinerary-messages">
+                        <div class="welcome-box" id="itinerary-welcome">
+                            <div class="icon">🗺️</div>
+                            <h4>AI行程规划助手</h4>
+                            <p>告诉我您想去哪里、玩几天、和谁一起，我会为您定制专属行程</p>
+                        </div>
+                    </div>
+                    <div class="quick-questions" id="itinerary-quick">
+                        <small>试试这样问我：</small>
+                        <button class="quick-btn" onclick="sendQuickQuestion('想去成都玩4天，带父母，求推荐行程')">成都4天亲子游</button>
+                        <button class="quick-btn" onclick="sendQuickQuestion('情侣去厦门3天，怎么安排比较浪漫？')">厦门情侣游</button>
+                        <button class="quick-btn" onclick="sendQuickQuestion('一个人周末去苏州，求文艺小众路线')">苏州独自游</button>
+                    </div>
+                </div>
+
+                <!-- 景点简介 -->
+                <div class="tab-content" id="intro-content">
+                    <div class="chat-messages" style="background: white;">
+                        <div class="intro-form" style="padding: 20px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                <div>
+                                    <label style="display: block; font-size: 0.85rem; color: #555; margin-bottom: 6px; font-weight: 500;">景点名称</label>
+                                    <input type="text" id="scenic-name" placeholder="如：故宫、长城、西湖" style="width: 100%; padding: 12px 16px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 0.95rem;">
+                                </div>
+                                <div>
+                                    <label style="display: block; font-size: 0.85rem; color: #555; margin-bottom: 6px; font-weight: 500;">所在城市</label>
+                                    <input type="text" id="scenic-city" placeholder="如：北京、杭州、西安" style="width: 100%; padding: 12px 16px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 0.95rem;">
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                <div>
+                                    <label style="display: block; font-size: 0.85rem; color: #555; margin-bottom: 6px; font-weight: 500;">景点标签</label>
+                                    <input type="text" id="scenic-tags" placeholder="如：历史古迹、亲子、自然风光" style="width: 100%; padding: 12px 16px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 0.95rem;">
+                                </div>
+                                <div>
+                                    <label style="display: block; font-size: 0.85rem; color: #555; margin-bottom: 6px; font-weight: 500;">景点类型</label>
+                                    <select id="scenic-type" style="width: 100%; padding: 12px 16px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 0.95rem; background: white;">
+                                        <option value="景点">景点</option>
+                                        <option value="博物馆">博物馆</option>
+                                        <option value="公园">公园</option>
+                                        <option value="古镇">古镇</option>
+                                        <option value="自然风光">自然风光</option>
+                                        <option value="主题乐园">主题乐园</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button class="btn-generate" onclick="generateIntro()">
+                                ✨ 生成AI简介
+                            </button>
+                            <div class="intro-result empty" id="intro-result">
+                                <p>生成的景点简介将显示在这里</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 输入区域 -->
+                <div class="chat-input-area" id="input-area">
+                    <div class="chat-input-group">
+                        <input type="text" class="chat-input" id="qa-input" 
+                               placeholder="输入您的旅游问题..." 
+                               onkeypress="handleKeyPress(event)">
+                        <button class="btn-send" onclick="sendMessage()">
+                            <span>发送</span>
+                            <span>➤</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧设置 -->
+            <div class="chat-sidebar">
+                <div class="settings-panel">
+                    <div class="settings-title">
+                        <span class="icon">⚙️</span>
+                        AI设置
+                    </div>
+                    <div class="settings-group">
+                        <label>API密钥</label>
+                        <input type="password" id="api-key" placeholder="输入您的API Key">
+                    </div>
+                    <div class="settings-group">
+                        <label>模型选择</label>
+                        <select id="model-select">
+                            <option value="gpt-3.5-turbo">GPT-3.5-Turbo（快速）</option>
+                            <option value="gpt-4o">GPT-4o（智能）</option>
+                            <option value="gpt-4">GPT-4（最强）</option>
+                        </select>
+                    </div>
+                    <div class="settings-group">
+                        <label>创造性参数</label>
+                        <select id="temperature-select">
+                            <option value="0.3">严谨</option>
+                            <option value="0.5" selected>平衡</option>
+                            <option value="0.7">创意</option>
+                            <option value="0.9">最大创意</option>
+                        </select>
+                    </div>
+                    <button class="btn-reset" onclick="resetChat()">
+                        🔄 重置当前对话
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // 从URL获取tab参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const initialTab = urlParams.get('tab') || 'qa';
+
+        // 生成唯一会话ID
+        const sessionId = 'travel_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        let currentTab = initialTab;
+
+        const tabConfigs = {
+            qa: {
+                title: '智能问答助手',
+                status: '基于AI的旅游问答',
+                placeholder: '输入您的旅游问题...',
+                quickId: 'qa-quick'
+            },
+            itinerary: {
+                title: '行程规划助手',
+                status: '专属行程定制服务',
+                placeholder: '描述您的旅行需求，如：去上海玩3天...',
+                quickId: 'itinerary-quick'
+            }
+        };
+
+        // 切换标签
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            document.querySelectorAll('.feature-tab').forEach(t => t.classList.remove('active'));
+            event.target.closest('.feature-tab').classList.add('active');
+            
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(tab + '-content').classList.add('active');
+            
+            // 更新头部信息
+            if (tabConfigs[tab]) {
+                document.getElementById('chat-title').textContent = tabConfigs[tab].title;
+                document.getElementById('chat-status').textContent = tabConfigs[tab].status;
+                document.getElementById('qa-input').placeholder = tabConfigs[tab].placeholder;
+            }
+            
+            // 显示/隐藏输入区域
+            const inputArea = document.getElementById('input-area');
+            inputArea.style.display = tab === 'intro' ? 'none' : 'block';
+        }
+
+        // 发送消息
+        async function sendMessage() {
+            const input = document.getElementById('qa-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            const apiKey = document.getElementById('api-key').value.trim();
+            if (!apiKey) {
+                showToast('请先输入API密钥！', 'error');
+                document.getElementById('api-key').focus();
+                return;
+            }
+            
+            addMessage('user', message);
+            input.value = '';
+            
+            document.getElementById('qa-welcome').style.display = 'none';
+            
+            const loadingHtml = `
+                <div class="message ai" id="loading-message">
+                    <div class="message-avatar">🤖</div>
+                    <div class="message-content">
+                        <div class="typing-indicator">
+                            <span></span><span></span><span></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('qa-messages').insertAdjacentHTML('beforeend', loadingHtml);
+            scrollToBottom();
+            
+            try {
+                const response = await fetch('/ai/chat/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        api_key: apiKey,
+                        session_id: sessionId,
+                        message: message,
+                        model: document.getElementById('model-select').value,
+                        temperature: parseFloat(document.getElementById('temperature-select').value),
+                        chat_type: currentTab
+                    })
+                });
+                
+                const data = await response.json();
+                document.getElementById('loading-message').remove();
+                
+                if (data.message === '1') {
+                    addMessage('ai', data.response);
+                } else {
+                    addMessage('ai', '错误：' + data.msg);
+                }
+            } catch (error) {
+                document.getElementById('loading-message').remove();
+                addMessage('ai', '网络错误，请稍后重试。');
+            }
+            
+            scrollToBottom();
+        }
+
+        // 添加消息
+        function addMessage(role, content) {
+            const html = `
+                <div class="message ${role}">
+                    <div class="message-avatar">${role === 'ai' ? '🤖' : '👤'}</div>
+                    <div class="message-content">${escapeHtml(content)}</div>
+                </div>
+            `;
+            document.getElementById('qa-messages').insertAdjacentHTML('beforeend', html);
+        }
+
+        // HTML转义
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML.replace(/\n/g, '<br>');
+        }
+
+        // 滚动到底部
+        function scrollToBottom() {
+            const container = document.getElementById('qa-messages');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 快捷问题
+        function sendQuickQuestion(question) {
+            document.getElementById('qa-input').value = question;
+            sendMessage();
+        }
+
+        // 回车发送
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        // 生成景点简介
+        async function generateIntro() {
+            const apiKey = document.getElementById('api-key').value.trim();
+            if (!apiKey) {
+                showToast('请先输入API密钥！', 'error');
+                return;
+            }
+            
+            const scenicName = document.getElementById('scenic-name').value.trim();
+            const city = document.getElementById('scenic-city').value.trim();
+            const tags = document.getElementById('scenic-tags').value.trim();
+            const scenicType = document.getElementById('scenic-type').value;
+            
+            if (!scenicName) {
+                showToast('请输入景点名称！', 'error');
+                return;
+            }
+            if (!city) {
+                showToast('请输入景点所在城市！', 'error');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('intro-result');
+            resultDiv.innerHTML = '<p style="color: #667eea;">✨ AI正在生成简介...</p>';
+            resultDiv.classList.remove('empty');
+            
+            try {
+                const response = await fetch('/ai/scenic/intro/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        api_key: apiKey,
+                        scenic_name: scenicName,
+                        city: city,
+                        tags: tags,
+                        scenic_type: scenicType,
+                        model: document.getElementById('model-select').value
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.message === '1') {
+                    resultDiv.innerHTML = '<p>' + data.intro.replace(/\n/g, '<br>') + '</p>';
+                } else {
+                    resultDiv.innerHTML = '<p style="color: #ef4444;">生成失败：' + data.msg + '</p>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<p style="color: #ef4444;">网络错误，请稍后重试。</p>';
+            }
+        }
+
+        // 重置对话
+        async function resetChat() {
+            try {
+                await fetch('/ai/chat/reset/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: sessionId })
+                });
+                
+                document.getElementById('qa-messages').innerHTML = '';
+                document.getElementById('qa-messages').insertAdjacentHTML('beforeend', document.getElementById('qa-welcome').outerHTML);
+                document.getElementById('qa-welcome').style.display = 'block';
+                
+                showToast('对话已重置！');
+            } catch (error) {
+                showToast('重置失败，请稍后重试。', 'error');
+            }
+        }
+
+        // Toast提示
+        function showToast(msg, type = '') {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = 'toast show' + (type ? ' ' + type : '');
+            setTimeout(() => toast.className = 'toast', 3000);
+        }
+
+        function logout() { window.location.href = '/logout/'; }
+
+        // 初始化：设置初始tab
+        if (initialTab !== 'qa') {
+            switchTab(initialTab);
+        }
+    </script>
+</body>
+</html>

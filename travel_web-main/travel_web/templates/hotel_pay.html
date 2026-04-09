@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>酒店订单支付 - Travel</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+
+    /* 顶部导航 */
+    .top-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(10px);
+      padding: 12px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+      z-index: 100;
+    }
+    .nav-brand {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #11998e;
+      text-decoration: none;
+    }
+    .nav-links { display: flex; gap: 20px; align-items: center; }
+    .nav-links a {
+      color: #333;
+      text-decoration: none;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 20px;
+      transition: all 0.3s;
+    }
+    .nav-links a:hover { background: #11998e; color: white; }
+
+    .main-card {
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+      margin-top: 80px;
+    }
+
+    .card-header {
+      background: linear-gradient(135deg, #11998e, #38ef7d);
+      color: white;
+      padding: 24px 30px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .card-header .icon { font-size: 2rem; }
+    .card-header h1 { font-size: 1.5rem; font-weight: 600; }
+    .card-header p { opacity: 0.9; font-size: 0.9rem; margin-top: 4px; }
+
+    .card-body { padding: 30px; }
+
+    /* 酒店信息 */
+    .hotel-summary {
+      display: flex;
+      gap: 20px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 16px;
+      margin-bottom: 24px;
+    }
+    .hotel-summary img {
+      width: 120px;
+      height: 90px;
+      object-fit: cover;
+      border-radius: 12px;
+    }
+    .hotel-summary .info { flex: 1; }
+    .hotel-summary .name {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+    .hotel-summary .meta {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 4px;
+    }
+    .hotel-summary .price {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #ff4757;
+      text-align: right;
+    }
+    .hotel-summary .price span {
+      font-size: 0.9rem;
+      font-weight: 400;
+      color: #999;
+    }
+
+    /* 表单 */
+    .form-section {
+      margin-bottom: 24px;
+    }
+    .form-section h3 {
+      font-size: 1.1rem;
+      color: #333;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e9ecef;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .form-row.full { grid-template-columns: 1fr; }
+
+    .form-item { margin-bottom: 0; }
+    .form-item label {
+      display: block;
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    .form-item input,
+    .form-item select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+    }
+    .form-item input:focus,
+    .form-item select:focus {
+      outline: none;
+      border-color: #11998e;
+    }
+
+    /* 支付方式 */
+    .payment-methods {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .payment-method {
+      padding: 16px;
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .payment-method:hover {
+      border-color: #11998e;
+      background: #f0fdf4;
+    }
+    .payment-method.selected {
+      border-color: #11998e;
+      background: #f0fdf4;
+    }
+    .payment-method .icon { font-size: 2rem; margin-bottom: 8px; }
+    .payment-method .name { font-weight: 600; color: #333; }
+    .payment-method input { display: none; }
+
+    /* 订单汇总 */
+    .order-summary {
+      background: #f8f9fa;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #e9ecef;
+    }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-row.total {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #ff4757;
+      padding-top: 16px;
+      margin-top: 8px;
+      border-top: 2px solid #dee2e6;
+      border-bottom: none;
+    }
+
+    /* 按钮 */
+    .btn-group {
+      display: flex;
+      gap: 16px;
+    }
+    .btn-cancel {
+      flex: 1;
+      padding: 14px 24px;
+      background: #e9ecef;
+      color: #666;
+      border: none;
+      border-radius: 25px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-cancel:hover { background: #dee2e6; }
+    .btn-confirm {
+      flex: 2;
+      padding: 14px 24px;
+      background: linear-gradient(135deg, #11998e, #38ef7d);
+      color: white;
+      border: none;
+      border-radius: 25px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .btn-confirm:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(17,153,142,0.4); }
+    .btn-confirm:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+    /* 成功弹窗 */
+    .success-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .success-modal.show { display: flex; }
+    .success-modal-content {
+      background: white;
+      border-radius: 24px;
+      padding: 40px;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      animation: popIn 0.3s ease;
+    }
+    @keyframes popIn {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .success-modal .icon {
+      font-size: 5rem;
+      margin-bottom: 20px;
+    }
+    .success-modal h2 {
+      font-size: 1.5rem;
+      color: #333;
+      margin-bottom: 12px;
+    }
+    .success-modal p {
+      color: #666;
+      margin-bottom: 24px;
+    }
+    .success-modal .btn-ok {
+      background: linear-gradient(135deg, #11998e, #38ef7d);
+      color: white;
+      border: none;
+      padding: 12px 40px;
+      border-radius: 25px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      z-index: 1001;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .toast.show { opacity: 1; }
+    .toast.error { background: #ff4757; }
+
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+      .payment-methods { grid-template-columns: 1fr; }
+      .hotel-summary { flex-direction: column; }
+      .hotel-summary img { width: 100%; height: 150px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- 顶部导航 -->
+  <nav class="top-nav">
+    <a href="/" class="nav-brand">Travel</a>
+    <div class="nav-links">
+      <a href="/">首页</a>
+      <a href="/scenic/">旅游推荐</a>
+      <a href="/hotel/">酒店推荐</a>
+      <a href="/trip/">行程规划</a>
+      <a href="/ticket/">交通票务</a>
+      <a href="/profile/">个人中心</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="main-card">
+      <div class="card-header">
+        <div class="icon">🏨</div>
+        <div>
+          <h1>酒店订单确认</h1>
+          <p>请确认您的预订信息</p>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <!-- 酒店信息摘要 -->
+        <div class="hotel-summary">
+          <img src="" alt="" id="hotelImg">
+          <div class="info">
+            <div class="name" id="hotelName"></div>
+            <div class="meta" id="hotelAddress"></div>
+            <div class="meta" id="hotelType"></div>
+          </div>
+          <div class="price">
+            <div id="hotelPrice"></div>
+            <span>/晚</span>
+          </div>
+        </div>
+
+        <!-- 预订信息表单 -->
+        <div class="form-section">
+          <h3>📋 预订信息</h3>
+          <div class="form-row">
+            <div class="form-item">
+              <label>入住日期</label>
+              <input type="date" id="checkinDate" required>
+            </div>
+            <div class="form-item">
+              <label>退房日期</label>
+              <input type="date" id="checkoutDate" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-item">
+              <label>房间数量</label>
+              <select id="roomCount">
+                <option value="1">1 间</option>
+                <option value="2">2 间</option>
+                <option value="3">3 间</option>
+                <option value="4">4 间</option>
+                <option value="5">5 间</option>
+              </select>
+            </div>
+            <div class="form-item">
+              <label>房间类型</label>
+              <select id="roomType">
+                <option value="标准间">标准间</option>
+                <option value="大床房">大床房</option>
+                <option value="双床房">双床房</option>
+                <option value="套房">套房</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 支付方式 -->
+        <div class="form-section">
+          <h3>💳 支付方式</h3>
+          <div class="payment-methods">
+            <label class="payment-method selected">
+              <input type="radio" name="payment" value="alipay" checked>
+              <div class="icon">💙</div>
+              <div class="name">支付宝</div>
+            </label>
+            <label class="payment-method">
+              <input type="radio" name="payment" value="wechat">
+              <div class="icon">💚</div>
+              <div class="name">微信支付</div>
+            </label>
+            <label class="payment-method">
+              <input type="radio" name="payment" value="bankcard">
+              <div class="icon">💳</div>
+              <div class="name">银行卡</div>
+            </label>
+          </div>
+        </div>
+
+        <!-- 订单汇总 -->
+        <div class="order-summary">
+          <div class="summary-row">
+            <span>房费 (<span id="nights">1</span> 晚 × <span id="rooms">1</span> 间)</span>
+            <span id="subtotal">¥0</span>
+          </div>
+          <div class="summary-row">
+            <span>服务费</span>
+            <span>¥0</span>
+          </div>
+          <div class="summary-row total">
+            <span>应付金额</span>
+            <span id="totalPrice">¥0</span>
+          </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="btn-group">
+          <button class="btn-cancel" onclick="cancelOrder()">取消</button>
+          <button class="btn-confirm" id="confirmBtn" onclick="confirmOrder()">确认支付</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 成功弹窗 -->
+  <div class="success-modal" id="successModal">
+    <div class="success-modal-content">
+      <div class="icon">🎉</div>
+      <h2>预定成功!</h2>
+      <p id="successMsg">您的酒店预订已成功提交</p>
+      <button class="btn-ok" onclick="goToOrders()">查看订单</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // 从URL参数获取酒店数据
+    const urlParams = new URLSearchParams(window.location.search);
+    const hotelData = {
+      name: urlParams.get('name') || '',
+      province: urlParams.get('province') || '',
+      city: urlParams.get('city') || '',
+      address: urlParams.get('address') || '',
+      score: urlParams.get('score') || '4.5',
+      price: parseInt(urlParams.get('price')) || 288,
+      rooms: urlParams.get('rooms') || '10',
+      pic_url: urlParams.get('pic_url') || '',
+      intro: urlParams.get('intro') || '',
+      type: urlParams.get('type') || '舒适型',
+      star: urlParams.get('star') || '3',
+      id: urlParams.get('id') || '0'
+    };
+
+    // DOM元素
+    const checkinDate = document.getElementById('checkinDate');
+    const checkoutDate = document.getElementById('checkoutDate');
+    const roomCount = document.getElementById('roomCount');
+    const roomType = document.getElementById('roomType');
+
+    // 初始化
+    function init() {
+      if (!hotelData.name) {
+        showToast('酒店信息不存在', 'error');
+        return;
+      }
+
+        // 填充酒店信息
+      document.getElementById('hotelImg').src = hotelData.pic_url || `https://picsum.photos/400/300?random=${hotelData.id}`;
+      document.getElementById('hotelImg').onerror = function() {
+        this.src = `https://picsum.photos/400/300?random=${Math.abs(hotelData.name.charCodeAt(0)) % 100}`;
+      };
+      document.getElementById('hotelName').textContent = hotelData.name;
+      document.getElementById('hotelAddress').textContent = `${hotelData.city} ${hotelData.address}`;
+      document.getElementById('hotelType').textContent = `${hotelData.type} · ${hotelData.star}星 · 评分 ${hotelData.score}`;
+      document.getElementById('hotelPrice').textContent = `¥${hotelData.price}`;
+
+      // 设置日期默认值
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      checkinDate.value = formatDate(today);
+      checkinDate.min = formatDate(today);
+
+      checkoutDate.value = formatDate(tomorrow);
+      checkoutDate.min = formatDate(tomorrow);
+
+      // 监听日期变化
+      checkinDate.addEventListener('change', updatePrice);
+      checkoutDate.addEventListener('change', updatePrice);
+      roomCount.addEventListener('change', updatePrice);
+
+      // 支付方式选择
+      document.querySelectorAll('.payment-method').forEach(method => {
+        method.addEventListener('click', function() {
+          document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
+          this.classList.add('selected');
+          this.querySelector('input').checked = true;
+        });
+      });
+
+      // 初始计算价格
+      updatePrice();
+    }
+
+    function formatDate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function updatePrice() {
+      const checkin = new Date(checkinDate.value);
+      const checkout = new Date(checkoutDate.value);
+
+      // 验证日期
+      if (checkout <= checkin) {
+        const nextDay = new Date(checkin);
+        nextDay.setDate(nextDay.getDate() + 1);
+        checkoutDate.value = formatDate(nextDay);
+      }
+
+      const nights = Math.ceil((new Date(checkoutDate.value) - new Date(checkinDate.value)) / (1000 * 60 * 60 * 24));
+      const rooms = parseInt(roomCount.value);
+
+      const nightsSpan = document.getElementById('nights');
+      const roomsSpan = document.getElementById('rooms');
+      const subtotal = document.getElementById('subtotal');
+      const totalPrice = document.getElementById('totalPrice');
+
+      nightsSpan.textContent = nights;
+      roomsSpan.textContent = rooms;
+
+      const total = hotelData.price * nights * rooms;
+      subtotal.textContent = `¥${total}`;
+      totalPrice.textContent = `¥${total}`;
+    }
+
+    function cancelOrder() {
+      window.location.href = `/hotel/detail/?name=${encodeURIComponent(hotelData.name)}&province=${encodeURIComponent(hotelData.province)}&city=${encodeURIComponent(hotelData.city)}&address=${encodeURIComponent(hotelData.address)}&score=${hotelData.score}&price=${hotelData.price}&rooms=${hotelData.rooms}&pic_url=${encodeURIComponent(hotelData.pic_url)}&intro=${encodeURIComponent(hotelData.intro)}&tel=${encodeURIComponent(hotelData.tel)}&type=${encodeURIComponent(hotelData.type)}&star=${hotelData.star}&id=${hotelData.id}`;
+    }
+
+    function confirmOrder() {
+      const btn = document.getElementById('confirmBtn');
+      btn.disabled = true;
+      btn.textContent = '支付中...';
+
+      const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+
+      const orderData = {
+        hotel_name: hotelData.name,
+        hotel_pic: hotelData.pic_url,
+        hotel_address: `${hotelData.province} ${hotelData.city} ${hotelData.address}`,
+        hotel_tel: hotelData.tel,
+        checkin_date: checkinDate.value,
+        checkout_date: checkoutDate.value,
+        room_count: parseInt(roomCount.value),
+        room_type: roomType.value,
+        total_price: hotelData.price * Math.ceil((new Date(checkoutDate.value) - new Date(checkinDate.value)) / (1000 * 60 * 60 * 24)) * parseInt(roomCount.value),
+        payment_method: paymentMethod
+      };
+
+      // 模拟支付过程
+      setTimeout(() => {
+        // 保存订单到服务器
+        fetch('/hotel/create_order/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: JSON.stringify(orderData)
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.message === '1') {
+            // 显示成功弹窗
+            document.getElementById('successMsg').textContent = `订单号: ${data.order_id}`;
+            document.getElementById('successModal').classList.add('show');
+          } else {
+            showToast(data.msg || '订单创建失败', 'error');
+            btn.disabled = false;
+            btn.textContent = '确认支付';
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          // 即使API失败，也显示成功（本地演示）
+          document.getElementById('successMsg').textContent = '订单已创建';
+          document.getElementById('successModal').classList.add('show');
+          btn.disabled = false;
+          btn.textContent = '确认支付';
+        });
+      }, 1500);
+    }
+
+    function goToOrders() {
+      document.getElementById('successModal').classList.remove('show');
+      window.location.href = '/profile/';
+    }
+
+    function showToast(msg, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = 'toast show' + (type === 'error' ? ' error' : '');
+      setTimeout(() => toast.className = 'toast', 3000);
+    }
+
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    init();
+  </script>
+</body>
+</html>

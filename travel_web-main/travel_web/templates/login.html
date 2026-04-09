@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>登录 - Travel旅游</title>
+  {% load static %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* 动态背景 */
+    .bg-shapes {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: 0;
+    }
+    
+    .bg-shapes::before,
+    .bg-shapes::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      background: linear-gradient(45deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+      animation: float 15s ease-in-out infinite;
+    }
+    
+    .bg-shapes::before {
+      width: 500px;
+      height: 500px;
+      top: -100px;
+      left: -100px;
+    }
+    
+    .bg-shapes::after {
+      width: 400px;
+      height: 400px;
+      bottom: -50px;
+      right: -50px;
+      animation-delay: -5s;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(30px, 30px) rotate(5deg); }
+      50% { transform: translate(0, 50px) rotate(0deg); }
+      75% { transform: translate(-30px, 30px) rotate(-5deg); }
+    }
+    
+    /* 登录容器 */
+    .login-container {
+      position: relative;
+      z-index: 1;
+      width: 420px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 24px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+    
+    /* 头部 */
+    .login-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 40px 40px 60px;
+      text-align: center;
+      position: relative;
+    }
+    
+    .login-header::after {
+      content: '';
+      position: absolute;
+      bottom: -20px;
+      left: 0;
+      right: 0;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 50% 50% 0 0;
+    }
+    
+    .login-logo {
+      width: 80px;
+      height: 80px;
+      background: white;
+      border-radius: 20px;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+    
+    .login-title {
+      color: white;
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .login-subtitle {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 14px;
+    }
+    
+    /* 表单区域 */
+    .login-body {
+      padding: 50px 40px 40px;
+    }
+    
+    /* 标签切换 */
+    .login-tabs {
+      display: flex;
+      background: #f5f5f5;
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 30px;
+    }
+    
+    .login-tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: #666;
+      transition: all 0.3s;
+    }
+    
+    .login-tab.active {
+      background: white;
+      color: #667eea;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* 输入框组 */
+    .input-group {
+      margin-bottom: 20px;
+      position: relative;
+    }
+    
+    .input-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 8px;
+    }
+    
+    .input-wrapper {
+      position: relative;
+    }
+    
+    .input-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 18px;
+      color: #999;
+    }
+    
+    .input-field {
+      width: 100%;
+      padding: 14px 16px 14px 48px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 15px;
+      transition: all 0.3s;
+      background: #fafafa;
+    }
+    
+    .input-field:focus {
+      outline: none;
+      border-color: #667eea;
+      background: white;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    }
+    
+    .input-field::placeholder {
+      color: #bbb;
+    }
+    
+    /* 角色选择 */
+    .role-select {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .role-option {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 14px;
+      font-weight: 500;
+      color: #666;
+    }
+    
+    .role-option.active {
+      border-color: #667eea;
+      background: rgba(102, 126, 234, 0.05);
+      color: #667eea;
+    }
+    
+    .role-option input {
+      display: none;
+    }
+    
+    /* 登录按钮 */
+    .btn-login {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
+    
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-login:active {
+      transform: translateY(0);
+    }
+    
+    /* 链接 */
+    .login-links {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+      font-size: 13px;
+    }
+    
+    .login-links a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .login-links a:hover {
+      color: #764ba2;
+    }
+    
+    /* 找回密码面板 */
+    .findpwd-panel {
+      display: none;
+    }
+    
+    .findpwd-panel.active {
+      display: block;
+    }
+    
+    .login-panel {
+      display: none;
+    }
+    
+    .login-panel.active {
+      display: block;
+    }
+    
+    /* 找回密码按钮 */
+    .btn-findpwd {
+      width: 100%;
+      padding: 16px;
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
+    
+    .btn-findpwd:hover {
+      background: #ff4757;
+      transform: translateY(-2px);
+    }
+    
+    /* 验证码按钮 */
+    .btn-send {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 8px 14px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .btn-send:hover {
+      background: #764ba2;
+    }
+    
+    .btn-send:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    
+    /* 错误提示 */
+    .error-tip {
+      color: #ff4757;
+      font-size: 12px;
+      margin-top: 6px;
+      display: none;
+    }
+    
+    /* 提示消息 */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .alert-success {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .alert-error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+    
+    /* 注册提示 */
+    .register-hint {
+      text-align: center;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .register-hint a {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 10px 30px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 25px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+    
+    .register-hint a:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    /* 响应式 */
+    @media (max-width: 480px) {
+      .login-container {
+        width: 95%;
+        margin: 20px;
+      }
+      .login-header {
+        padding: 30px 30px 50px;
+      }
+      .login-body {
+        padding: 40px 30px 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-shapes"></div>
+  
+  <div class="login-container">
+    <div class="login-header">
+      <div class="login-logo">🌍</div>
+      <h1 class="login-title">Travel旅游</h1>
+      <p class="login-subtitle">探索世界，从这里开始</p>
+    </div>
+    
+    <div class="login-body">
+      {% if msg %}
+      <div class="alert alert-success">{{ msg }}</div>
+      {% endif %}
+      {% if error %}
+      <div class="alert alert-error">{{ error }}</div>
+      {% endif %}
+      
+      <!-- 标签切换 -->
+      <div class="login-tabs">
+        <div class="login-tab active" data-tab="login">账号登录</div>
+        <div class="login-tab" data-tab="findpwd">找回密码</div>
+      </div>
+      
+      <!-- 登录面板 -->
+      <div class="login-panel active" id="loginPanel">
+        <form onsubmit="return false;">
+          <!-- 角色选择 -->
+          <div class="role-select">
+            <label class="role-option active">
+              <input type="radio" name="role" value="user" checked>
+              普通用户
+            </label>
+            <label class="role-option">
+              <input type="radio" name="role" value="admin">
+              管理员
+            </label>
+          </div>
+          
+          <div class="input-group">
+            <label class="input-label">用户名 / 邮箱</label>
+            <div class="input-wrapper">
+              <span class="input-icon">👤</span>
+              <input type="text" class="input-field" id="input_username" placeholder="请输入用户名或邮箱">
+            </div>
+            <div class="error-tip" id="loginUsernameTip"></div>
+          </div>
+          
+          <div class="input-group">
+            <label class="input-label">密码</label>
+            <div class="input-wrapper">
+              <span class="input-icon">🔒</span>
+              <input type="password" class="input-field" id="input_password" placeholder="请输入密码">
+            </div>
+            <div class="error-tip" id="loginPwdTip"></div>
+          </div>
+          
+          <button type="button" class="btn-login" id="loginBtn">登 录</button>
+          
+          <div class="login-links">
+            <a href="/sign/">没有账号？立即注册</a>
+            <a href="#" onclick="$('.login-tab[data-tab=findpwd]').click(); return false;">忘记密码？</a>
+          </div>
+        </form>
+        
+        <div class="register-hint">
+          还没有账号？
+          <a href="/sign/">创建新账号</a>
+        </div>
+      </div>
+      
+      <!-- 找回密码面板 -->
+      <div class="findpwd-panel" id="findpwdPanel">
+        <form onsubmit="return false;">
+          <div class="input-group">
+            <label class="input-label">邮箱地址</label>
+            <div class="input-wrapper">
+              <span class="input-icon">📧</span>
+              <input type="email" class="input-field" id="find_email" placeholder="输入注册时绑定的邮箱">
+            </div>
+            <div class="error-tip" id="findEmailTip"></div>
+          </div>
+          
+          <div class="input-group">
+            <label class="input-label">验证码</label>
+            <div class="input-wrapper">
+              <span class="input-icon">🔑</span>
+              <input type="text" class="input-field" id="find_code" placeholder="输入验证码" style="padding-right: 100px;">
+              <button type="button" class="btn-send" id="sendCodeBtn">发送验证码</button>
+            </div>
+            <div class="error-tip" id="findCodeTip"></div>
+          </div>
+          
+          <div class="input-group">
+            <label class="input-label">新密码</label>
+            <div class="input-wrapper">
+              <span class="input-icon">🔒</span>
+              <input type="password" class="input-field" id="find_newpwd" placeholder="输入新密码(6-16位)">
+            </div>
+            <div class="error-tip" id="findPwdTip"></div>
+          </div>
+          
+          <button type="button" class="btn-findpwd" id="resetPwdBtn">重置密码</button>
+          
+          <div class="login-links" style="justify-content: center;">
+            <a href="#" onclick="$('.login-tab[data-tab=login]').click(); return false;">想起密码了？去登录</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script>
+    $(function() {
+      // 切换标签
+      $('.login-tab').click(function() {
+        $('.login-tab').removeClass('active');
+        $(this).addClass('active');
+        var tab = $(this).data('tab');
+        if (tab == 'login') {
+          $('#loginPanel').addClass('active');
+          $('#findpwdPanel').removeClass('active');
+        } else {
+          $('#loginPanel').removeClass('active');
+          $('#findpwdPanel').addClass('active');
+        }
+      });
+      
+      // 角色选择
+      $('.role-option').click(function() {
+        $('.role-option').removeClass('active');
+        $(this).addClass('active');
+        $(this).find('input').prop('checked', true);
+      });
+      
+      // 回车登录
+      $('.input-field').keypress(function(e) {
+        if (e.which == 13) {
+          $('#loginBtn').click();
+        }
+      });
+      
+      // 登录
+      $('#loginBtn').click(function() {
+        var username = $('#input_username').val().trim();
+        var pwd = $('#input_password').val();
+        var role = $('input[name="role"]:checked').val();
+        
+        $('.error-tip').hide();
+        
+        if (!username) {
+          $('#loginUsernameTip').text('请输入用户名或邮箱').show();
+          return;
+        }
+        if (!pwd) {
+          $('#loginPwdTip').text('请输入密码').show();
+          return;
+        }
+        
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('登录中...');
+        
+        if (role === 'admin') {
+          $.ajax({
+            url: '/admin/login/',
+            type: 'POST',
+            data: { username: username, password: pwd },
+            success: function(data) {
+              if (data.status === 'success') {
+                window.location.href = '/admin/dashboard/';
+              } else {
+                $('#loginUsernameTip').text(data.message || '管理员登录失败').show();
+                $btn.prop('disabled', false).text('登 录');
+              }
+            },
+            error: function() {
+              alert('请求失败，请稍后重试');
+              $btn.prop('disabled', false).text('登 录');
+            }
+          });
+        } else {
+          $.ajax({
+            url: '/login_v2/',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ username: username, password: pwd }),
+            success: function(data) {
+              if (data.message == '1') {
+                window.location.href = '/';
+              } else {
+                $('#loginUsernameTip').text(data.msg || '登录失败').show();
+                $btn.prop('disabled', false).text('登 录');
+              }
+            },
+            error: function() {
+              alert('请求失败，请稍后重试');
+              $btn.prop('disabled', false).text('登 录');
+            }
+          });
+        }
+      });
+      
+      // 发送验证码
+      $('#sendCodeBtn').click(function() {
+        var email = $('#find_email').val().trim();
+        
+        if (!email || !email.includes('@')) {
+          $('#findEmailTip').text('请输入有效的邮箱地址').show();
+          return;
+        }
+        
+        var btn = $(this);
+        btn.prop('disabled', true).text('发送中...');
+        
+        $.ajax({
+          url: '/send_reset_code/',
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({ email: email }),
+          success: function(data) {
+            if (data.message == '1') {
+              alert('验证码已发送到邮箱');
+              var countdown = 60;
+              var timer = setInterval(function() {
+                countdown--;
+                btn.text(countdown + '秒后重试');
+                if (countdown <= 0) {
+                  clearInterval(timer);
+                  btn.prop('disabled', false);
+                  btn.text('发送验证码');
+                }
+              }, 1000);
+            } else {
+              alert(data.msg || '发送失败');
+              btn.prop('disabled', false);
+              btn.text('发送验证码');
+            }
+          },
+          error: function() {
+            alert('请求失败，请稍后重试');
+            btn.prop('disabled', false);
+            btn.text('发送验证码');
+          }
+        });
+      });
+      
+      // 重置密码
+      $('#resetPwdBtn').click(function() {
+        var email = $('#find_email').val().trim();
+        var code = $('#find_code').val().trim();
+        var newpwd = $('#find_newpwd').val();
+        
+        $('.error-tip').hide();
+        
+        if (!email || !email.includes('@')) {
+          $('#findEmailTip').text('请输入有效的邮箱地址').show();
+          return;
+        }
+        if (!code) {
+          $('#findCodeTip').text('请输入验证码').show();
+          return;
+        }
+        if (newpwd.length < 6 || newpwd.length > 16) {
+          $('#findPwdTip').text('密码需要在6-16位之间').show();
+          return;
+        }
+        
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('重置中...');
+        
+        $.ajax({
+          url: '/reset_password/',
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({ email: email, code: code, new_password: newpwd }),
+          success: function(data) {
+            if (data.message == '1') {
+              alert('密码重置成功！请使用新密码登录');
+              window.location.href = '/login/';
+            } else {
+              alert(data.msg || '重置失败');
+              $btn.prop('disabled', false).text('重置密码');
+            }
+          },
+          error: function() {
+            alert('请求失败，请稍后重试');
+            $btn.prop('disabled', false).text('重置密码');
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>酒店推荐 - Travel</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* 全屏背景 - 酒店/建筑风景 */
+    .page-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(17,24,39,0.85) 0%, rgba(55,65,81,0.9) 100%),
+                  url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920&q=80') center/cover no-repeat;
+      z-index: -1;
+    }
+
+    /* 顶部导航 */
+    .top-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(15px);
+      padding: 14px 50px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+      z-index: 100;
+    }
+    .nav-brand {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #d4af37;
+      text-decoration: none;
+      letter-spacing: 3px;
+    }
+    .nav-links { display: flex; gap: 8px; align-items: center; }
+    .nav-links a {
+      color: #444;
+      text-decoration: none;
+      font-weight: 500;
+      padding: 10px 20px;
+      border-radius: 25px;
+      transition: all 0.3s;
+      font-size: 0.95rem;
+    }
+    .nav-links a:hover { background: #1a1a2e; color: white; }
+    .nav-links a.active { background: #1a1a2e; color: white; }
+    .nav-user { display: flex; align-items: center; gap: 15px; }
+    .nav-user .avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, #d4af37, #f4e4bc);
+      color: #1a1a2e;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 1.1rem;
+    }
+    .btn-logout {
+      background: #ff6b6b; color: white; border: none; padding: 10px 20px;
+      border-radius: 25px; cursor: pointer; font-weight: 500;
+      transition: all 0.3s;
+    }
+    .btn-logout:hover { background: #ee5a5a; }
+
+    /* 主内容 */
+    .main-content {
+      min-height: 100vh;
+      padding: 100px 50px 60px;
+    }
+
+    /* 页面标题 */
+    .page-header {
+      text-align: center;
+      margin-bottom: 50px;
+      animation: fadeInUp 0.8s ease-out;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .page-header h1 {
+      color: white;
+      font-size: 2.8rem;
+      font-weight: 300;
+      letter-spacing: 8px;
+      margin-bottom: 12px;
+      text-shadow: 0 4px 30px rgba(0,0,0,0.3);
+    }
+    .page-header p {
+      color: rgba(255,255,255,0.9);
+      font-size: 1rem;
+      letter-spacing: 2px;
+    }
+
+    /* 搜索区域 */
+    .search-section {
+      max-width: 800px;
+      margin: 0 auto 50px;
+      animation: fadeInUp 0.8s ease-out 0.1s both;
+    }
+    .search-box {
+      display: flex;
+      background: rgba(255,255,255,0.98);
+      border-radius: 60px;
+      padding: 6px;
+      box-shadow: 0 15px 50px rgba(0,0,0,0.25);
+    }
+    .search-box input {
+      flex: 1;
+      border: none; outline: none;
+      padding: 18px 28px;
+      font-size: 16px;
+      border-radius: 60px;
+      background: transparent;
+    }
+    .search-box button {
+      background: linear-gradient(135deg, #d4af37, #f4d03f);
+      color: #1a1a2e; border: none;
+      padding: 16px 36px;
+      font-size: 15px;
+      border-radius: 60px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 600;
+    }
+    .search-box button:hover { transform: scale(1.05); }
+
+    /* 热门城市 */
+    .hot-cities {
+      max-width: 900px;
+      margin: 0 auto 50px;
+      animation: fadeInUp 0.8s ease-out 0.2s both;
+    }
+    .hot-cities h2 {
+      color: white;
+      font-size: 1.2rem;
+      font-weight: 400;
+      margin-bottom: 20px;
+      text-align: center;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 15px rgba(0,0,0,0.3);
+    }
+    .cities-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+    }
+    .city-card {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 12px 24px;
+      text-align: center;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.3s;
+      color: white;
+      font-weight: 500;
+    }
+    .city-card:hover {
+      background: rgba(212,175,55,0.3);
+      border-color: rgba(212,175,55,0.5);
+      transform: translateY(-3px);
+    }
+
+    /* 搜索结果 */
+    .search-result {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: none;
+    }
+    .search-result.active { display: block; }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 30px;
+    }
+    .result-title {
+      color: white;
+      font-size: 1.8rem;
+      font-weight: 400;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 15px rgba(0,0,0,0.3);
+    }
+    .btn-back {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 12px 24px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+    .btn-back:hover {
+      background: rgba(255,255,255,0.25);
+      transform: translateX(-3px);
+    }
+
+    .hotel-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 25px;
+    }
+
+    .hotel-card {
+      background: rgba(255,255,255,0.95);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.4s ease;
+    }
+    .hotel-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+    .hotel-card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+    }
+    .hotel-info {
+      padding: 20px;
+    }
+    .hotel-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+    .hotel-location {
+      font-size: 0.9rem;
+      color: #d4af37;
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+    .hotel-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .meta-tag {
+      background: #f5f5f5;
+      color: #666;
+      padding: 4px 12px;
+      border-radius: 15px;
+      font-size: 0.8rem;
+    }
+    .hotel-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 12px;
+      border-top: 1px solid #eee;
+    }
+    .hotel-score {
+      font-size: 0.9rem;
+      color: #ff6b6b;
+      font-weight: 500;
+    }
+    .hotel-price {
+      font-size: 1.4rem;
+      color: #d4af37;
+      font-weight: 700;
+    }
+    .hotel-price span {
+      font-size: 0.8rem;
+      font-weight: 400;
+      color: #999;
+    }
+
+    /* 无数据 */
+    .no-data {
+      text-align: center;
+      padding: 60px 20px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 20px;
+    }
+    .no-data .icon {
+      font-size: 4rem;
+      margin-bottom: 16px;
+    }
+    .no-data p {
+      color: white;
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+    }
+    .no-data .btn {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 25px;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+    .no-data .btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    /* 加载和错误 */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: white;
+      font-size: 1.2rem;
+    }
+    .loading .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-msg {
+      text-align: center;
+      padding: 20px;
+      color: #ff6b6b;
+      font-size: 1rem;
+      background: rgba(255,255,255,0.1);
+      border-radius: 15px;
+      max-width: 400px;
+      margin: 20px auto;
+    }
+
+    /* 响应式 */
+    @media (max-width: 768px) {
+      .top-nav { padding: 12px 20px; }
+      .nav-brand { font-size: 1.3rem; }
+      .nav-links a { padding: 8px 12px; font-size: 0.85rem; }
+      .main-content { padding: 90px 20px 40px; }
+      .page-header h1 { font-size: 2rem; letter-spacing: 4px; }
+      .hotel-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-bg"></div>
+
+  <!-- 顶部导航 -->
+  <nav class="top-nav">
+    <a href="/" class="nav-brand">Travel</a>
+    <div class="nav-links">
+      <a href="/">首页</a>
+      <a href="/scenic/">旅游推荐</a>
+      <a href="/hotel/" class="active">酒店推荐</a>
+      <a href="/trip/">行程规划</a>
+      <a href="/ticket/">交通票务</a>
+      {% if user_id %}
+        <div class="nav-user">
+          <div class="avatar">{{ username|slice:":1" }}</div>
+          <span>{{ username }}</span>
+          <a href="/profile/">个人中心</a>
+          <button class="btn-logout" onclick="logout()">退出</button>
+        </div>
+      {% else %}
+        <a href="/login/">登录</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <!-- 主内容 -->
+  <div class="main-content">
+    <!-- 页面标题 -->
+    <div class="page-header">
+      <h1>精选酒店</h1>
+      <p>舒适住宿，旅途无忧</p>
+    </div>
+
+    <!-- 搜索框 -->
+    <div class="search-section">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="输入城市名称，搜索热门酒店" autocomplete="off">
+        <button id="searchBtn">搜索</button>
+      </div>
+    </div>
+
+    <!-- 热门城市 -->
+    <div class="hot-cities" id="hotCities">
+      <h2>热门城市</h2>
+      <div class="cities-grid" id="citiesGrid"></div>
+    </div>
+
+    <!-- 加载状态 -->
+    <div class="loading" id="loading" style="display: none;">
+      <div class="spinner"></div>
+      <p>正在搜索...</p>
+    </div>
+
+    <!-- 错误提示 -->
+    <div class="error-msg" id="errorMsg" style="display: none;"></div>
+
+    <!-- 搜索结果 -->
+    <div class="search-result" id="searchResult">
+      <div class="result-header">
+        <h2 class="result-title" id="resultTitle"></h2>
+        <button class="btn-back" id="backBtn">返回</button>
+      </div>
+      <div class="hotel-grid" id="hotelList"></div>
+    </div>
+  </div>
+
+  <script>
+    const cities = {{ hot_cities|safe }};
+
+    const citiesGrid = document.getElementById('citiesGrid');
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const searchResult = document.getElementById('searchResult');
+    const resultTitle = document.getElementById('resultTitle');
+    const hotelList = document.getElementById('hotelList');
+    const loading = document.getElementById('loading');
+    const errorMsg = document.getElementById('errorMsg');
+    const hotCities = document.getElementById('hotCities');
+    const backBtn = document.getElementById('backBtn');
+
+    // 渲染热门城市
+    cities.forEach(city => {
+      const card = document.createElement('div');
+      card.className = 'city-card';
+      card.innerHTML = `<span>${city}</span>`;
+      card.addEventListener('click', () => {
+        searchInput.value = city;
+        search();
+      });
+      citiesGrid.appendChild(card);
+    });
+
+    function search() {
+      const keyword = searchInput.value.trim();
+      if (!keyword) return;
+
+      searchResult.classList.remove('active');
+      hotCities.style.display = 'none';
+      loading.style.display = 'block';
+      errorMsg.style.display = 'none';
+
+      fetch(`/hotel/search/?city=${encodeURIComponent(keyword)}`)
+        .then(res => res.json())
+        .then(data => {
+          loading.style.display = 'none';
+          if (data.message === '1' && data.hotels && data.hotels.length > 0) {
+            showResults(data.hotels, keyword);
+          } else {
+            showNoData(keyword);
+          }
+        })
+        .catch(err => {
+          loading.style.display = 'none';
+          errorMsg.textContent = '搜索失败，请重试';
+          errorMsg.style.display = 'block';
+        });
+    }
+
+    function showResults(hotels, keyword) {
+      resultTitle.textContent = keyword + ' 热门酒店';
+      hotelList.innerHTML = hotels.map(h => `
+        <a href="/hotel/detail/?name=${encodeURIComponent(h.name)}&province=${encodeURIComponent(h.province || '')}&city=${encodeURIComponent(h.city || '')}&address=${encodeURIComponent(h.address || '')}&score=${h.score}&price=${h.price}&rooms=${h.rooms}&pic_url=${encodeURIComponent(h.pic_url || '')}&intro=${encodeURIComponent(h.intro || '')}&type=${encodeURIComponent(h.type || '')}&star=${h.star}&id=${h.id}" class="hotel-card">
+          <img src="${h.pic_url || 'https://picsum.photos/400/300?random=' + h.id}" alt="${h.name}" onerror="this.src='https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&q=80'">
+          <div class="hotel-info">
+            <div class="hotel-name">${h.name}</div>
+            <div class="hotel-location">${h.city || ''} ${h.address || ''}</div>
+            <div class="hotel-meta">
+              <span class="meta-tag">${h.type || '舒适型'}</span>
+              <span class="meta-tag">${h.star || 3}星</span>
+              <span class="meta-tag">⭐${h.score}</span>
+            </div>
+            <div class="hotel-bottom">
+              <span class="hotel-score">评分 ${h.score}</span>
+              <span class="hotel-price">¥${h.price}<span>/晚</span></span>
+            </div>
+          </div>
+        </a>
+      `).join('');
+      searchResult.classList.add('active');
+    }
+
+    function showNoData(keyword) {
+      hotelList.innerHTML = `
+        <div class="no-data" style="grid-column: 1/-1;">
+          <div class="icon">🏨</div>
+          <p>暂无 ${keyword} 的酒店数据</p>
+          <a href="javascript:history.back()" class="btn">返回</a>
+        </div>
+      `;
+      searchResult.classList.add('active');
+    }
+
+    backBtn.addEventListener('click', () => {
+      searchResult.classList.remove('active');
+      hotCities.style.display = 'block';
+      errorMsg.style.display = 'none';
+    });
+
+    searchBtn.addEventListener('click', search);
+    searchInput.addEventListener('keypress', e => {
+      if (e.key === 'Enter') search();
+    });
+
+    function logout() {
+      window.location.href = '/logout/';
+    }
+  </script>
+</body>
+</html>
